@@ -25,4 +25,20 @@ class ScraperProcessingTest extends TestCase
   (new PollScrapingJob($job->id))->handle();
   $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'failed']);
  }
+ public function test_failed_poll_preserves_capacity_when_external_state_is_unknown(): void {
+  $job=$this->job(); (new PollScrapingJob($job->id))->failed(new \RuntimeException('timeout'));
+  $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'unknown','scraper_job_id'=>'remote-1','scraper_slot_acquired'=>1]);
+  $this->assertSame(1,(int)\DB::table('scraper_capacity')->where('id',1)->value('used'));
+ }
+ public function test_stale_claim_token_cannot_update_new_owner(): void {
+  $job=$this->job(['polling_claimed_at'=>now()]); \DB::table('prospecting_jobs')->where('id',$job->id)->update(['polling_claim_token'=>'token-b']);
+  $affected=ProspectingJob::whereKey($job->id)->where('polling_claim_token','token-a')->update(['progress'=>99]);
+  $this->assertSame(0,$affected); $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'polling_claim_token'=>'token-b','progress'=>0]);
+ }
+ public function test_claim_renewal_requires_current_token(): void {
+  $job=$this->job(['polling_claimed_at'=>now()->subMinutes(9)]); \DB::table('prospecting_jobs')->where('id',$job->id)->update(['polling_claim_token'=>'token-b']);
+  $valid=ProspectingJob::whereKey($job->id)->where('polling_claim_token','token-b')->update(['polling_claimed_at'=>now()]);
+  $stale=ProspectingJob::whereKey($job->id)->where('polling_claim_token','token-a')->update(['polling_claimed_at'=>now()]);
+  $this->assertSame(1,$valid); $this->assertSame(0,$stale); $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'polling_claim_token'=>'token-b']);
+ }
 }

@@ -11,6 +11,7 @@ class RunScrapingJob implements ShouldQueue
 {
     use Dispatchable, Queueable;
     public $tries = 3;
+    public $timeout = 75;
     public $backoff = [30, 120, 300];
     public function __construct(public int $jobId) {}
     public function handle(): void
@@ -37,5 +38,19 @@ class RunScrapingJob implements ShouldQueue
         Log::info('Scraper job submitted', ['job_id'=>$job->id]);
         PollScrapingJob::dispatch($job->id)->delay(now()->addSeconds(config('kaizen.scraper.poll_seconds')));
     }
-    public function failed(\Throwable $e): void { ProspectingJob::whereKey($this->jobId)->update(['status'=>'failed','error_message'=>'Falha no processamento.','finished_at'=>now()]); Log::error($e->getMessage(),['job_id'=>$this->jobId]); }
+    public function failed(\Throwable $e): void {
+        $job = ProspectingJob::find($this->jobId);
+        if ($job && !$job->scraper_job_id) {
+            DB::transaction(function () use ($job) {
+                $locked = ProspectingJob::whereKey($job->id)->lockForUpdate()->first();
+                $capacity = DB::table('scraper_capacity')->where('id', 1)->lockForUpdate()->first();
+                if ($locked && $locked->scraper_slot_acquired && $capacity && $capacity->used > 0) {
+                    DB::table('scraper_capacity')->where('id', 1)->update(['used'=>$capacity->used-1,'updated_at'=>now()]);
+                    $locked->update(['scraper_slot_acquired'=>false]);
+                }
+                if ($locked) $locked->update(['status'=>'failed','error_message'=>'Falha no processamento.','finished_at'=>now()]);
+            });
+        }
+        Log::error($e->getMessage(),['job_id'=>$this->jobId]);
+    }
 }

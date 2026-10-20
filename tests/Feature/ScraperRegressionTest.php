@@ -1,0 +1,105 @@
+<?php
+namespace Tests\Feature;
+use App\Console\Commands\ReconcileScraperJobs;
+use App\Jobs\{PollScrapingJob,RunScrapingJob};
+use App\Models\{Lead,LeadNote,ProspectingJob,User};
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
+use Tests\TestCase;
+
+class ScraperRegressionTest extends TestCase
+{
+ use RefreshDatabase;
+
+ private function job(array $extra=[]): ProspectingJob {
+  $u=User::factory()->create(['email_verified_at'=>now()]);
+  DB::table('scraper_capacity')->update(['used'=>1]);
+  return ProspectingJob::create(array_merge(['user_id'=>$u->id,'keywords'=>['cafe'],'latitude'=>1,'longitude'=>2,'status'=>'working','scraper_job_id'=>'remote-1','scraper_slot_acquired'=>true,'started_at'=>now()],$extra));
+ }
+
+ public function test_completed_poll_clears_persistent_claim_and_repeated_poll_is_noop(): void {
+  $job=$this->job();
+  Http::fake(['*/api/v1/jobs/remote-1'=>Http::response(['Status'=>'ok','Progress'=>100]),'*/api/v1/jobs/remote-1/download'=>Http::response("title,place_id
+Cafe,p1
+")]);
+  (new PollScrapingJob($job->id))->handle();
+  $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'ok','polling_claimed_at'=>null]);
+  (new PollScrapingJob($job->id))->handle();
+  $this->assertSame(1,Lead::count());
+ }
+
+ public function test_active_claim_prevents_second_poll_and_expired_claim_is_recoverable(): void {
+  $job=$this->job(['polling_claimed_at'=>now()]);
+  Http::fake(['*'=>Http::response(['Status'=>'working','Progress'=>5])]);
+  (new PollScrapingJob($job->id))->handle();
+  Http::assertSentCount(0);
+  $job->update(['polling_claimed_at'=>now()->subMinutes(11)]);
+  (new PollScrapingJob($job->id))->handle();
+  Http::assertSentCount(1);
+ }
+
+ public function test_unknown_command_only_lists_and_does_not_change_jobs(): void {
+  $job=$this->job(['status'=>'unknown','error_message'=>'network','scraper_job_id'=>'remote-x']);
+  $before=DB::table('scraper_capacity')->where('id',1)->value('used');
+  $this->artisan('scraper:unknown')->expectsOutputToContain('remote-x')->assertExitCode(0);
+  $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'unknown','scraper_slot_acquired'=>1]);
+  $this->assertSame($before,DB::table('scraper_capacity')->where('id',1)->value('used'));
+ }
+ public function test_reconcile_requeues_unknown_with_external_id_without_posting(): void {
+  Queue::fake(); $job=$this->job(['status'=>'unknown','polling_claimed_at'=>now()->subMinutes(11)]);
+  $this->artisan('scraper:reconcile')->assertExitCode(0); Queue::assertPushed(PollScrapingJob::class,fn($j)=>$j->jobId===$job->id);
+ }
+ public function test_reconcile_does_not_requeue_unknown_without_external_id(): void {
+  Queue::fake(); $job=$this->job(['status'=>'unknown','scraper_job_id'=>null,'polling_claimed_at'=>now()->subMinutes(11)]);
+  $this->artisan('scraper:reconcile')->assertExitCode(0); Queue::assertNotPushed(PollScrapingJob::class);
+ }
+
+ public function test_lines_without_external_identifier_are_ignored(): void {
+  $job=$this->job();
+  Http::fake(['*/api/v1/jobs/remote-1'=>Http::response(['Status'=>'ok']),'*/api/v1/jobs/remote-1/download'=>Http::response("title,address
+Unknown,Somewhere
+")]);
+  (new PollScrapingJob($job->id))->handle();
+  $this->assertSame(0,Lead::count());
+ }
+
+ public function test_user_id_payload_cannot_cross_tenant_or_link_note_to_foreign_lead(): void {
+  $one=User::factory()->create(['email_verified_at'=>now()]); $two=User::factory()->create(['email_verified_at'=>now()]);
+  $lead=Lead::create(['user_id'=>$one->id,'name'=>'Private']);
+  $this->actingAs($two)->postJson('/api/leads/'.$lead->id.'/notes',['user_id'=>$one->id,'content'=>'x'])->assertNotFound();
+  $this->assertDatabaseCount('lead_notes',0);
+ }
+
+ public function test_foreign_job_export_and_status_are_denied(): void {
+  $one=User::factory()->create(['email_verified_at'=>now()]); $two=User::factory()->create(['email_verified_at'=>now()]);
+  $job=ProspectingJob::create(['user_id'=>$one->id,'keywords'=>['x'],'status'=>'ok']);
+  $this->actingAs($two)->getJson('/api/prospecting/jobs/'.$job->id)->assertNotFound();
+  $this->actingAs($two)->get('/api/prospecting/jobs/'.$job->id.'/export')->assertNotFound();
+ }
+
+ public function test_legacy_status_does_not_call_scraper(): void {
+  $job=$this->job(['status'=>'working']);
+  Http::fake();
+  $u=User::find($job->user_id);
+  $this->actingAs($u)->getJson('/api/v1/jobs/'.$job->id)->assertOk();
+  Http::assertNothingSent();
+  $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'working']);
+ }
+
+ public function test_capacity_release_is_idempotent_after_completion(): void {
+  $job=$this->job();
+  Http::fake(['*/api/v1/jobs/remote-1'=>Http::response(['Status'=>'failed'])]);
+  (new PollScrapingJob($job->id))->handle();
+  $this->assertSame(0,(int)DB::table('scraper_capacity')->where('id',1)->value('used'));
+  (new PollScrapingJob($job->id))->handle();
+  $this->assertSame(0,(int)DB::table('scraper_capacity')->where('id',1)->value('used'));
+ }
+}
+
+
+
+
+

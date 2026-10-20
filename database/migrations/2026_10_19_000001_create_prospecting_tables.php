@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->string('status')->default('pending')->index();
             $table->unsignedInteger('progress')->default(0);
             $table->boolean('scraper_slot_acquired')->default(false)->index();
+            $table->timestamp('polling_claimed_at')->nullable()->index();
             $table->timestamp('cancel_requested_at')->nullable();
             $table->softDeletes();
             $table->text('error_message')->nullable();
@@ -46,7 +47,7 @@ return new class extends Migration {
             $table->string('external_place_id')->nullable();
             $table->json('raw_data')->nullable();
             $table->timestamps();
-            $table->index(['user_id', 'external_place_id']);
+            $table->unique(['user_id', 'external_place_id']);
         });
 
         Schema::create('lead_notes', function (Blueprint $table) {
