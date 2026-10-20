@@ -6,6 +6,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\LeadPageController;
 use App\Http\Controllers\PipelineController;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\ModulePlaceholderController;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Route;
 
@@ -24,7 +26,8 @@ Route::get('/email/verify', [VerificationController::class, 'notice'])->middlewa
 Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->middleware(['auth','signed','throttle:6,1'])->name('verification.verify');
 Route::post('/email/verification-notification', [VerificationController::class, 'send'])->middleware(['auth','throttle:6,1'])->name('verification.send');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
-Route::middleware(['auth','active','verified'])->group(function () { Route::view('/dashboard', 'panel')->name('dashboard'); Route::get('/leads', LeadPageController::class)->name('leads'); Route::get('/pipeline',[PipelineController::class,'index'])->name('pipeline'); Route::post('/pipeline/stages',[PipelineController::class,'storeStage'])->name('pipeline.stages.store'); Route::post('/pipeline/leads/{lead}',[PipelineController::class,'send'])->name('pipeline.send'); Route::patch('/pipeline/opportunities/{opportunity}',[PipelineController::class,'move'])->name('pipeline.move'); });
+Route::middleware(['auth','active','verified'])->group(function () { Route::view('/dashboard', 'panel')->name('dashboard'); Route::get('/leads', LeadPageController::class)->name('leads'); Route::post('/leads', [LeadPageController::class, 'store'])->name('leads.store'); Route::get('/minha-conta',[AccountController::class,'edit'])->name('account.edit'); Route::put('/minha-conta',[AccountController::class,'update'])->name('account.update'); Route::put('/minha-conta/senha',[AccountController::class,'updatePassword'])->name('account.password'); Route::get('/pipeline',[PipelineController::class,'index'])->name('pipeline'); Route::post('/pipeline/stages',[PipelineController::class,'storeStage'])->name('pipeline.stages.store'); Route::post('/pipeline/leads/{lead}',[PipelineController::class,'send'])->name('pipeline.send'); Route::patch('/pipeline/opportunities/{opportunity}',[PipelineController::class,'move'])->name('pipeline.move'); });
+Route::middleware(['auth','active','verified'])->group(function () { foreach (['chats','numeros-conectados','disparar','email-marketing','automacoes','agenda','briefings'] as $module) { Route::get('/'.$module, ModulePlaceholderController::class)->defaults('module', $module)->name('module.'.$module); } });
 Route::get('/prospecting', function () {
     $response = response()->file(resource_path('views/prospecting.html'));
     $response->headers->setCookie(cookie('XSRF-TOKEN', csrf_token(), 120, '/', null, app()->environment('production'), false, false, 'lax'));

@@ -13,42 +13,29 @@
     @stack('styles')
 </head>
 <body class="scraper-shell-page">
-    <aside class="scraper-shell-sidebar" aria-label="Navegação principal">
+    <aside class="scraper-shell-sidebar" aria-label="NavegaÃ§Ã£o principal">
         <a class="scraper-shell-brand" href="{{ route('dashboard') }}">
             <img src="{{ asset('app/img/logo.png') }}" alt="" width="34" height="34">
-            <span><strong>Google Maps Scraper</strong><small>Painel de coleta</small></span>
+            <span><strong>Parceiros Kaizen</strong><small>Kaizen Mídias</small></span>
         </a>
 
-        <div class="scraper-shell-mode" role="tablist" aria-label="Modo de visualização">
-            <a href="{{ route('prospecting') }}" role="tab" @class(['is-active' => request()->routeIs('prospecting')])>Mapa</a>
-            <a href="{{ route('dashboard') }}" role="tab" @class(['is-active' => request()->routeIs('dashboard')])>Painel</a>
-        </div>
-
         <nav class="scraper-shell-nav">
-            <a href="{{ route('dashboard') }}" @class(['is-active' => request()->routeIs('dashboard')])>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg>
-                Visão geral
-            </a>
-            <a href="{{ route('prospecting') }}" @class(['is-active' => request()->routeIs('prospecting')])>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg>
-                Nova busca
-            </a>
-            <a href="{{ route('dashboard') }}#sec-jobs">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>
-                Suas buscas
-            </a>
-            <a href="{{ route('leads') }}" @class(['is-active' => request()->routeIs('leads')])>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3.2 2.4-5 5.5-5s4.9 1.8 5.5 5M16 9h5M18.5 6.5v5"/></svg>
-                Leads
-            </a>
-            <a href="{{ route('pipeline') }}" @class(['is-active' => request()->routeIs('pipeline*')])>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="7" width="5" height="13" rx="1"/><rect x="17" y="10" width="4" height="10" rx="1"/></svg>
-                Pipeline
-            </a>
+            <a href="{{ route('dashboard') }}" @class(['is-active' => request()->routeIs('dashboard')])>▦ <span>Visão geral</span></a>
+            <a href="{{ route('prospecting') }}" @class(['is-active' => request()->routeIs('prospecting')])>⌖ <span>Prospecção</span></a>
+            <a href="{{ route('dashboard') }}#sec-jobs">☷ <span>Suas buscas</span></a>
+            <a href="{{ route('leads') }}" @class(['is-active' => request()->routeIs('leads')])>♙ <span>Leads</span></a>
+            <a href="{{ route('pipeline') }}" @class(['is-active' => request()->routeIs('pipeline*')])>▥ <span>Pipeline</span></a>
+            <a href="{{ route('module.chats') }}" @class(['is-active' => request()->routeIs('module.chats')])>◌ <span>Chats</span></a>
+            <a href="{{ route('module.numeros-conectados') }}">◉ <span>Números conectados</span></a>
+            <a href="{{ route('module.disparar') }}">➤ <span>Disparar</span></a>
+            <a href="{{ route('module.email-marketing') }}">✉ <span>E-mail Marketing</span></a>
+            <a href="{{ route('module.automacoes') }}">⚙ <span>Automações</span></a>
+            <a href="{{ route('module.agenda') }}">▣ <span>Agenda</span></a>
+            <a href="{{ route('module.briefings') }}">▤ <span>Briefings</span></a>
+            <a href="{{ route('account.edit') }}" @class(['is-active' => request()->routeIs('account.*')])>◯ <span>Minha conta</span></a>
         </nav>
-
         <div class="scraper-shell-footer">
-            <a class="scraper-shell-muted-link" href="{{ route('painel') }}">Abrir painel original</a>
+            <span class="scraper-shell-muted-link">Kaizen Mídias · Google Maps Scraper</span>
             <span class="scraper-shell-account">{{ auth()->user()->email }}</span>
             <form method="post" action="{{ route('logout') }}">
                 @csrf
