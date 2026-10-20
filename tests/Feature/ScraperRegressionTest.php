@@ -69,15 +69,15 @@ Unknown,Somewhere
  public function test_user_id_payload_cannot_cross_tenant_or_link_note_to_foreign_lead(): void {
   $one=User::factory()->create(['email_verified_at'=>now()]); $two=User::factory()->create(['email_verified_at'=>now()]);
   $lead=Lead::create(['user_id'=>$one->id,'name'=>'Private']);
-  $this->actingAs($two)->postJson('/api/leads/'.$lead->id.'/notes',['user_id'=>$one->id,'content'=>'x'])->assertNotFound();
+  $this->actingAs($two)->postJson('/api/leads/'.$lead->id.'/notes',['user_id'=>$one->id,'content'=>'x'])->assertForbidden();
   $this->assertDatabaseCount('lead_notes',0);
  }
 
  public function test_foreign_job_export_and_status_are_denied(): void {
   $one=User::factory()->create(['email_verified_at'=>now()]); $two=User::factory()->create(['email_verified_at'=>now()]);
   $job=ProspectingJob::create(['user_id'=>$one->id,'keywords'=>['x'],'status'=>'ok']);
-  $this->actingAs($two)->getJson('/api/prospecting/jobs/'.$job->id)->assertNotFound();
-  $this->actingAs($two)->get('/api/prospecting/jobs/'.$job->id.'/export')->assertNotFound();
+  $this->actingAs($two)->getJson('/api/prospecting/jobs/'.$job->id)->assertForbidden();
+  $this->actingAs($two)->get('/api/prospecting/jobs/'.$job->id.'/export')->assertForbidden();
  }
 
  public function test_legacy_status_does_not_call_scraper(): void {
@@ -96,6 +96,21 @@ Unknown,Somewhere
   $this->assertSame(0,(int)DB::table('scraper_capacity')->where('id',1)->value('used'));
   (new PollScrapingJob($job->id))->handle();
   $this->assertSame(0,(int)DB::table('scraper_capacity')->where('id',1)->value('used'));
+ }
+
+ public function test_expired_local_deadline_still_accepts_external_terminal_status(): void {
+  $job=$this->job(['started_at'=>now()->subHours(2)]);
+  Http::fake(['*/api/v1/jobs/remote-1'=>Http::response(['Status'=>'failed','Progress'=>100])]);
+  (new PollScrapingJob($job->id))->handle();
+  $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'failed','scraper_slot_acquired'=>0]);
+  Http::assertSentCount(1);
+ }
+
+ public function test_repeated_cancellation_is_reconciled_without_premature_release(): void {
+  $job=$this->job(['status'=>'cancel_requested','cancel_requested_at'=>now()]);
+  Http::fake(['*/api/v1/jobs/remote-1'=>Http::response(['Status'=>'working','Progress'=>4])]);
+  (new PollScrapingJob($job->id))->handle();
+  $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'cancel_requested','scraper_slot_acquired'=>1]);
  }
 }
 

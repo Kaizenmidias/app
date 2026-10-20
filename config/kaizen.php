@@ -10,5 +10,7 @@ return [
    'max_duration' => (int) env('SCRAPER_MAX_DURATION', 3600),
    'max_attempts' => (int) env('SCRAPER_MAX_ATTEMPTS', 3),
    'concurrency' => (int) env('SCRAPER_CONCURRENCY', 1),
+   'import_max_bytes' => (int) env('SCRAPER_IMPORT_MAX_BYTES', 25 * 1024 * 1024),
+   'import_max_rows' => (int) env('SCRAPER_IMPORT_MAX_ROWS', 10000),
     ],
 ];

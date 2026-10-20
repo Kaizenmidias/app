@@ -1,1 +1,0 @@
-@extends('layouts.kaizen') @section('content')<h1>Kaizen Partners</h1><p>Olá, {{ auth()->user()->name }}.</p><p>O dashboard de prospecção será conectado ao frontend original na próxima etapa.</p><form method="post" action="{{ route('logout') }}">@csrf<button>Sair</button></form>@endsection

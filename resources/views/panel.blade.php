@@ -28,15 +28,10 @@
       <a href="#sec-new" class="nav-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg>Nova busca</a>
       <a href="#sec-jobs" class="nav-item"><svg viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9"/><circle cx="4.8" cy="12" r=".9"/><circle cx="4.8" cy="17.5" r=".9"/></svg>Suas buscas <span id="nav-badge" class="nav-badge" hidden></span></a>
       <a href="#results" class="nav-item" id="nav-results" hidden><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M9.5 9.5v10"/></svg>Resultados</a>
+      <a href="/leads" class="nav-item"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3.2 2.4-5 5.5-5s4.9 1.8 5.5 5M16 9h5M18.5 6.5v5"/></svg>Leads</a>
+      <a href="/pipeline" class="nav-item"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="7" width="5" height="13" rx="1"/><rect x="17" y="10" width="4" height="10" rx="1"/></svg>Pipeline</a>
     </nav>
     <div class="sidebar-foot">
-      <div class="credits compact">
-        <p>Motor: <a href="https://github.com/gosom/google-maps-scraper" target="_blank" rel="noopener"><b>google-maps-scraper</b></a> de Georgios Komninos (@gosom) · MIT</p>
-        <div class="credits-actions">
-          <a class="credit-btn" href="https://github.com/gosom/google-maps-scraper" target="_blank" rel="noopener" title="Dar estrela no GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>Estrela</a>
-          <a class="credit-btn" href="https://github.com/sponsors/gosom" target="_blank" rel="noopener" title="Apoiar o autor"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 21.35-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>Apoiar</a>
-        </div>
-      </div>
       <span id="health" class="health"><i></i><span>verificando…</span></span>
       <a class="link-muted" href="/classic" title="Interface original do scraper">interface antiga</a>
     </div>

@@ -41,4 +41,30 @@ class ScraperProcessingTest extends TestCase
   $stale=ProspectingJob::whereKey($job->id)->where('polling_claim_token','token-a')->update(['polling_claimed_at'=>now()]);
   $this->assertSame(1,$valid); $this->assertSame(0,$stale); $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'polling_claim_token'=>'token-b']);
  }
+
+ public function test_submission_failure_keeps_capacity_and_marks_unknown(): void {
+  $u=User::factory()->create(['email_verified_at'=>now()]); $job=ProspectingJob::create(['user_id'=>$u->id,'keywords'=>['cafe'],'latitude'=>1,'longitude'=>2,'status'=>'pending']);
+  Http::fake(fn()=>throw new \RuntimeException('ambiguous timeout'));
+  (new \App\Jobs\RunScrapingJob($job->id))->handle();
+  $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'unknown','scraper_slot_acquired'=>1,'scraper_job_id'=>null]);
+  $this->assertSame(1,(int)\DB::table('scraper_capacity')->where('id',1)->value('used'));
+ }
+
+ public function test_completed_job_does_not_post_again(): void {
+  $job=$this->job(['status'=>'ok','scraper_job_id'=>'remote-complete','scraper_slot_acquired'=>false]); Http::fake();
+  (new \App\Jobs\RunScrapingJob($job->id))->handle();
+  Http::assertNothingSent();
+ }
+
+ public function test_csv_parser_handles_quotes_cid_fallback_and_reports_rejections(): void {
+  $job=$this->job(); Http::fake(['*/download'=>Http::response("title,place_id,cid\n\"Cafe, Centro\",,cid-1\nMissing,,\n")]);
+  $outcome=app(ScraperClient::class)->import($job);
+  $this->assertTrue($outcome->complete); $this->assertSame(1,$outcome->accepted); $this->assertSame(1,$outcome->rejected); $this->assertDatabaseHas('leads',['external_place_id'=>'cid-1','name'=>'Cafe, Centro']);
+ }
+
+ public function test_lost_owner_stops_import_and_is_not_complete(): void {
+  $job=$this->job(['polling_claim_token'=>'owner-a']); Http::fake(['*/download'=>Http::response("title,place_id\nCafe,p1\n")]);
+  $outcome=app(ScraperClient::class)->import($job,'owner-b',fn()=>false);
+  $this->assertFalse($outcome->complete); $this->assertTrue($outcome->ownershipLost); $this->assertSame(0,Lead::count());
+ }
 }

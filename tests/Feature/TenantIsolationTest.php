@@ -14,13 +14,13 @@ class TenantIsolationTest extends TestCase
     {
         $one=User::factory()->create(['email_verified_at'=>now()]); $two=User::factory()->create(['email_verified_at'=>now()]);
         $job=ProspectingJob::create(['user_id'=>$one->id,'keywords'=>['dentistas'],'status'=>'ok']);
-        $this->actingAs($two)->getJson('/api/prospecting/jobs/'.$job->id)->assertNotFound();
+        $this->actingAs($two)->getJson('/api/prospecting/jobs/'.$job->id)->assertForbidden();
     }
     public function test_partner_cannot_update_another_partners_lead(): void
     {
         $one=User::factory()->create(['email_verified_at'=>now()]); $two=User::factory()->create(['email_verified_at'=>now()]);
         $lead=Lead::create(['user_id'=>$one->id,'name'=>'Private lead']);
-        $this->actingAs($two)->putJson('/api/leads/'.$lead->id,['name'=>'Changed'])->assertNotFound();
+        $this->actingAs($two)->putJson('/api/leads/'.$lead->id,['name'=>'Changed'])->assertForbidden();
     }
     public function test_partner_cannot_access_another_partners_note_or_export(): void
     {
@@ -28,9 +28,9 @@ class TenantIsolationTest extends TestCase
         $job=ProspectingJob::create(['user_id'=>$one->id,'keywords'=>['cafes'],'status'=>'ok']);
         $lead=Lead::create(['user_id'=>$one->id,'prospecting_job_id'=>$job->id,'name'=>'Private']);
         $note=LeadNote::create(['user_id'=>$one->id,'lead_id'=>$lead->id,'content'=>'private']);
-        $this->actingAs($two)->postJson('/api/leads/'.$lead->id.'/notes',['content'=>'x'])->assertNotFound();
-        $this->actingAs($two)->putJson('/api/notes/'.$note->id,['content'=>'x'])->assertNotFound();
-        $this->actingAs($two)->get('/api/prospecting/jobs/'.$job->id.'/export')->assertNotFound();
+        $this->actingAs($two)->postJson('/api/leads/'.$lead->id.'/notes',['content'=>'x'])->assertForbidden();
+        $this->actingAs($two)->putJson('/api/notes/'.$note->id,['content'=>'x'])->assertForbidden();
+        $this->actingAs($two)->get('/api/prospecting/jobs/'.$job->id.'/export')->assertForbidden();
     }
     public function test_owner_can_create_and_download_private_export(): void
     {

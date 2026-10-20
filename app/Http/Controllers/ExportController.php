@@ -14,7 +14,7 @@ class ExportController extends Controller
 
     public function download(Request $request, ProspectingJob $job)
     {
-        abort_unless($job->user_id === $request->user()->id, 404);
+        $this->authorize('view', $job);
         $export = ProspectingExport::create(['user_id' => $request->user()->id, 'prospecting_job_id' => $job->id, 'format' => 'csv']);
         $head = ['name','phone','email','website','category','address','latitude','longitude','external_place_id'];
         $stream = fopen('php://temp', 'r+');

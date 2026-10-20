@@ -55,4 +55,5 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isActive(): bool { return $this->status === 'active'; }
     public function prospectingJobs() { return $this->hasMany(ProspectingJob::class); }
     public function leads() { return $this->hasMany(Lead::class); }
+    public function pipelineStages() { return $this->hasMany(PipelineStage::class); }
 }
