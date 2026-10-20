@@ -98,6 +98,14 @@ All category E harnesses, workers, cookie jars, fixtures, logs, dumps, local `.e
 
 The release is **not frozen** and is not ready for publication based on this inventory alone.
 
+## Local candidate versioning
+
+- Functional release candidate commit: `5cc3e1ac32ed123bced3fe5b9dcd14f9ae5c264d`.
+- The commit includes the protected panel move, Leads/Pipeline runtime, migrations `000003` and `000004`, related tests and reviewed documentation.
+- It explicitly excludes HTTP/SQL diagnostic harnesses, temporary workers, fixtures, logs, cookies, dumps and the local `AGENTS.md` edit.
+- The working tree still contains those excluded diagnostic changes; they are intentionally outside the candidate commit.
+- This commit has not been pushed and has not been deployed.
+
 ## Final scraper and dashboard review
 
 ### `public/app/painel.html`
