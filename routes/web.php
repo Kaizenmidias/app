@@ -23,5 +23,9 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 Route::post('/email/verification-notification', [VerificationController::class, 'send'])->middleware(['auth','throttle:6,1'])->name('verification.send');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 Route::middleware(['auth','active','verified'])->group(function () { Route::redirect('/dashboard', '/prospecting')->name('dashboard'); });
-Route::get('/prospecting', fn () => response()->file(resource_path('views/prospecting.html'))->withCookie(cookie('XSRF-TOKEN', csrf_token(), 120, '/', null, app()->environment('production'), false, false, 'lax')))->middleware(['auth','active','verified'])->name('prospecting');
+Route::get('/prospecting', function () {
+    $response = response()->file(resource_path('views/prospecting.html'));
+    $response->headers->setCookie(cookie('XSRF-TOKEN', csrf_token(), 120, '/', null, app()->environment('production'), false, false, 'lax'));
+    return $response;
+})->middleware(['auth','active','verified'])->name('prospecting');
 Route::middleware(['auth','active','verified','admin'])->prefix('admin')->name('admin.')->group(function () { Route::get('/',[AdminController::class,'dashboard'])->name('dashboard'); Route::get('/users',[AdminController::class,'users'])->name('users'); Route::get('/users/create',[AdminController::class,'create'])->name('users.create'); Route::post('/users',[AdminController::class,'store'])->name('users.store'); Route::get('/users/{user}/edit',[AdminController::class,'edit'])->name('users.edit'); Route::put('/users/{user}',[AdminController::class,'update'])->name('users.update'); Route::post('/users/{user}/toggle',[AdminController::class,'toggle'])->name('users.toggle'); Route::post('/users/{user}/verification',[AdminController::class,'resendVerification'])->name('users.verification'); Route::post('/users/{user}/password-reset',[AdminController::class,'resetPassword'])->name('users.password-reset'); });
