@@ -1,0 +1,1 @@
+@extends('layouts.kaizen') @section('content')<h1>Administração</h1><p>Usuários: {{ $users }}</p><p>Ativos: {{ $active }} · Bloqueados: {{ $blocked }}</p><div class="links"><a href="{{ route('admin.users') }}">Gerenciar usuários</a><a href="{{ route('dashboard') }}">Voltar</a></div>@endsection
