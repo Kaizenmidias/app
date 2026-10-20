@@ -1,0 +1,23 @@
+:root {
+    --kaizen-blue: #0075ff;
+    --kaizen-blue-hover: #0065df;
+    --kaizen-text: #141a20;
+    --kaizen-muted: #7e8793;
+    --kaizen-placeholder: #969ca8;
+    --kaizen-border: #dce0e6;
+    --kaizen-surface: rgba(255, 255, 255, .96);
+    --kaizen-background: #f4f6f8;
+    --kaizen-error: #b42318;
+    --kaizen-success: #188038;
+    --kaizen-font: Inter, sans-serif;
+    --kaizen-space-1: 4px;
+    --kaizen-space-2: 8px;
+    --kaizen-space-3: 12px;
+    --kaizen-space-4: 16px;
+    --kaizen-space-5: 24px;
+    --kaizen-radius-control: 10px;
+    --kaizen-radius-button: 12px;
+    --kaizen-radius-card: 22px;
+    --kaizen-shadow-card: 0 14px 36px rgba(22, 34, 47, .15);
+    --kaizen-shadow-button: 0 5px 12px rgba(0, 117, 255, .24);
+}
