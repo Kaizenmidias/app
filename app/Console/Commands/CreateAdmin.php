@@ -14,7 +14,9 @@ class CreateAdmin extends Command
         $name = $this->option('name') ?: $this->ask('Nome completo');
         $password = $this->secret('Senha (não será exibida)');
         if (!$password || strlen($password) < 12) { $this->error('A senha precisa ter pelo menos 12 caracteres.'); return self::FAILURE; }
-        User::create(['name'=>$name,'email'=>$email,'password'=>Hash::make($password),'role'=>'admin','status'=>'active','email_verified_at'=>now()]);
+        $user = User::create(['name'=>$name,'email'=>$email,'password'=>Hash::make($password),'role'=>'admin','status'=>'active']);
+        // Keep verification explicit: email_verified_at is intentionally not mass assignable.
+        $user->forceFill(['email_verified_at' => now()])->save();
         $this->info('Administrador criado.'); return self::SUCCESS;
     }
 }
