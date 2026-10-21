@@ -33,7 +33,6 @@
     </nav>
     <div class="sidebar-foot">
       <span id="health" class="health"><i></i><span>verificando…</span></span>
-      <a class="link-muted" href="/classic" title="Interface original do scraper">interface antiga</a>
     </div>
   </aside>
 
@@ -142,7 +141,6 @@
 
           <div id="form-error" class="alert" hidden></div>
           <button id="submit" class="btn btn-primary" type="submit"><span class="btn-label">Iniciar busca</span></button>
-          <p class="fineprint">Uma busca por vez evita bloqueio temporário do Google. Telefones e e-mails são dados pessoais: use conforme a LGPD.</p>
         </form>
       </section>
 
@@ -227,11 +225,6 @@
       </div>
     </section>
 
-    <footer class="page-foot">
-      <div class="credits">
-        <p>Motor de coleta: <a href="https://github.com/gosom/google-maps-scraper" target="_blank" rel="noopener"><b>google-maps-scraper</b></a>, de <b>Georgios Komninos</b> (<a href="https://github.com/gosom" target="_blank" rel="noopener">@gosom</a>), licença MIT. Kit de instalação baseado em <a href="https://github.com/Mahanaicoach/google-maps-scraper-kit" target="_blank" rel="noopener">Mahanaicoach/google-maps-scraper-kit</a>.</p>
-      </div>
-    </footer>
   </main>
 
   <div id="toast" class="toast" hidden role="status"></div>
