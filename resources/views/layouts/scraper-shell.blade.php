@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('design-system/tokens.css') }}">
-    <link rel="stylesheet" href="{{ asset('scraper-shell.css') }}">
+    <link rel="stylesheet" href="{{ asset('scraper-shell.css') }}?v=158">
     @stack('styles')
 </head>
 <body class="scraper-shell-page">
