@@ -10,8 +10,7 @@ class ProspectingController extends Controller
     public function __invoke(Request $request)
     {
         $html = file_get_contents(resource_path('views/prospecting.html'));
-        $token = e(csrf_token());
-        $shell = '<aside class="scraper-shell-sidebar prospecting-shell-sidebar" aria-label="NavegaÃƒÂ§ÃƒÂ£o principal"><a class="scraper-shell-brand" href="/dashboard"><img src="/app/img/logo.png" alt="" width="34" height="34"><span><strong>Parceiros Kaizen</strong><small>Kaizen MÃƒÂ­dias</small></span></a><nav class="scraper-shell-nav"><a href="/dashboard">Ã¢â€“Â¦ <span>VisÃƒÂ£o geral</span></a><a class="is-active" href="/prospecting">Ã¢Å’â€“ <span>ProspecÃƒÂ§ÃƒÂ£o</span></a><a href="/dashboard#sec-jobs">Ã¢ËœÂ· <span>Suas buscas</span></a><a href="/leads">Ã¢â„¢â„¢ <span>Leads</span></a><a href="/pipeline">Ã¢â€“Â¥ <span>Pipeline</span></a><a href="/chats">Ã¢â€”Å’ <span>Chats</span></a><a href="/numeros-conectados">Ã¢â€”â€° <span>NÃƒÂºmeros conectados</span></a><a href="/disparar">Ã¢Å¾Â¤ <span>Disparar</span></a><a href="/email-marketing">Ã¢Å“â€° <span>E-mail Marketing</span></a><a href="/automacoes">Ã¢Å¡â„¢ <span>AutomaÃƒÂ§ÃƒÂµes</span></a><a href="/agenda">Ã¢â€“Â£ <span>Agenda</span></a><a href="/briefings">Ã¢â€“Â¤ <span>Briefings</span></a><a href="/minha-conta">Ã¢â€”Â¯ <span>Minha conta</span></a></nav><div class="scraper-shell-footer"><span class="scraper-shell-muted-link">Kaizen MÃƒÂ­dias Ã‚Â· Google Maps Scraper</span><form method="post" action="/logout"><input type="hidden" name="_token" value="'.$token.'"><button type="submit" class="scraper-shell-logout">Sair</button></form></div></aside>';
+        $shell = view("components.scraper-sidebar")->render();
         $html = str_replace('<body>', '<body class="prospecting-embedded">'.$shell, $html);
         // Keep the original panel as the scraper's functional surface. Its
         // legacy header is hidden by scoped CSS; IDs and event targets remain.
