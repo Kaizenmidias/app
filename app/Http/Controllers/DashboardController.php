@@ -16,7 +16,7 @@ class DashboardController extends Controller
         $html = str_replace('<aside class="sidebar liquid">', '<aside class="sidebar liquid dashboard-legacy-sidebar" style="display:none!important;visibility:hidden!important">', $html);
         $html = str_replace(
             '</head>',
-            '<link rel="stylesheet" href="'.asset('scraper-shell.css').'?v='.$shellVersion.'"><link rel="stylesheet" href="'.asset('dashboard-shell.css').'?v='.$dashboardVersion.'"></head>',
+            '<meta name="csrf-token" content="'.e(csrf_token()).'"><link rel="stylesheet" href="'.asset('scraper-shell.css').'?v='.$shellVersion.'"><link rel="stylesheet" href="'.asset('dashboard-shell.css').'?v='.$dashboardVersion.'"></head>',
             $html,
         );
         return response($html)->header('Content-Type', 'text/html; charset=UTF-8')->cookie('XSRF-TOKEN', csrf_token(), 120, '/', null, app()->environment('production'), false, false, 'lax');

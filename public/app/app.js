@@ -4,8 +4,8 @@
   "use strict";
 
   const API = "/api/v1/jobs";
-  const csrf = () => decodeURIComponent((document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/)||[])[1]||"");
-  const apiFetch = (url, options={}) => fetch(url, {...options, headers: {...(options.headers||{}), ...(options.method && options.method !== "GET" ? {"X-XSRF-TOKEN": csrf()} : {})}});
+  const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || decodeURIComponent((document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/)||[])[1]||"");
+  const apiFetch = (url, options={}) => fetch(url, {credentials: "same-origin", ...options, headers: {...(options.headers||{}), ...(options.method && options.method !== "GET" ? {"X-XSRF-TOKEN": csrf()} : {})}});
   const POLL_MS = 4000;
   const JOINER = { pt: "em", en: "in", es: "en" };   // "dentista em Barra Funda"
   const STATUS = { ok: "Concluída", working: "Pesquisando…", pending: "Na fila", failed: "Falhou" };

@@ -19,7 +19,7 @@ class ProspectingController extends Controller
         $html = str_replace('<aside class="sidebar glass" id="panel">', '<aside class="sidebar glass prospecting-functional-panel" id="panel">', $html);
         $html = str_replace(
             '</head>',
-            '<link rel="stylesheet" href="'.asset('scraper-shell.css').'?v='.$shellVersion.'"><link rel="stylesheet" href="'.asset('prospecting-shell.css').'?v='.$prospectingVersion.'"></head>',
+            '<meta name="csrf-token" content="'.e(csrf_token()).'"><link rel="stylesheet" href="'.asset('scraper-shell.css').'?v='.$shellVersion.'"><link rel="stylesheet" href="'.asset('prospecting-shell.css').'?v='.$prospectingVersion.'"></head>',
             $html,
         );
         return response($html)->header('Content-Type', 'text/html; charset=UTF-8')->cookie('XSRF-TOKEN', csrf_token(), 120, '/', null, app()->environment('production'), false, false, 'lax');

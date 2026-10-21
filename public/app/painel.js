@@ -5,6 +5,8 @@
   "use strict";
 
   const API = "/api/v1/jobs";
+  const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || decodeURIComponent((document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/)||[])[1]||"");
+  const apiFetch = (url, options={}) => fetch(url, {credentials: "same-origin", ...options, headers: {...(options.headers||{}), ...(options.method && options.method !== "GET" ? {"X-XSRF-TOKEN": csrf()} : {})}});
   const POLL_MS = 4000;
   const JOINER = { pt: "em", en: "in", es: "en" };   // "dentista em Barra Funda"
   const STATUS = { ok: "Concluída", working: "Rodando", pending: "Na fila", failed: "Falhou" };
@@ -292,7 +294,7 @@
       ? `Parar a busca “${job.name}”? O que já foi coletado se perde.`
       : `Apagar a busca “${job.name}”? Arquivos já baixados continuam no seu computador.`;
     if (!confirm(msg)) return;
-    const r = await fetch(`${API}/${job.id}`, { method: "DELETE" });
+      const r = await apiFetch(`${API}/${job.id}`, { method: "DELETE" });
     if (!r.ok) return toast("Não consegui apagar essa busca.");
     delete rowsCache[job.id]; delete state.stats[job.id];
     if (state.current === job.id) closeResults();
@@ -422,7 +424,7 @@
         zoom: g ? zoomFor(radiusMeters(), +g.lat) : 14, radius: radiusMeters(),
         fast_mode: false, max_time: maxMin ? maxMin * 60 : autoSecs,
       };
-      const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const r = await apiFetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       if (!r.ok) {
         let msg = `O scraper recusou a busca (erro ${r.status}).`;
         try { const j = await r.json(); if (j.message) msg += ` ${j.message}`; } catch {}
