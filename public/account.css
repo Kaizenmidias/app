@@ -35,3 +35,4 @@
 .form-errors ul { margin: 0; padding-left: 18px; }
 @media (max-width: 800px) { .account-profile-card { align-items: flex-start; flex-direction: column; } .account-profile-actions { justify-content: flex-start; } .account-card-grid { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .account-profile-card, .account-card { padding: 18px; border-radius: 16px; } .account-profile-main { align-items: flex-start; } .account-profile-avatar { width: 72px; height: 72px; font-size: 26px; } .account-profile-copy h2 { font-size: 19px; } .account-profile-actions, .account-profile-actions form, .account-profile-actions .button { width: 100%; } }
+.account-profile-actions{gap:14px}.account-profile-actions .button{white-space:nowrap}
