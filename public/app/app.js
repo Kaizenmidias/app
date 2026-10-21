@@ -1,4 +1,4 @@
-// Maps Scraper — front-end for the local gosom/google-maps-scraper REST API.
+﻿// Maps Scraper â€” front-end for the local gosom/google-maps-scraper REST API.
 // Talks to same-origin /api/v1 (proxied by nginx), Nominatim for geocoding, OpenStreetMap tiles for the map.
 (() => {
   "use strict";
@@ -8,12 +8,12 @@
   const apiFetch = async (url, options={}) => { const method = (options.method || "GET").toUpperCase(); let token = csrf(); if (method !== "GET") { const tokenResponse = await fetch(`${API}/csrf-token`, { credentials: "same-origin", cache: "no-store" }); if (tokenResponse.ok) token = (await tokenResponse.json()).token || token; } return fetch(url, {credentials: "same-origin", ...options, headers: {...(options.headers||{}), ...(method !== "GET" ? {"X-CSRF-TOKEN": token} : {})}}); };
   const POLL_MS = 4000;
   const JOINER = { pt: "em", en: "in", es: "en" };   // "dentista em Barra Funda"
-  const STATUS = { ok: "Concluída", working: "Pesquisando…", pending: "Na fila", failed: "Falhou" };
+  const STATUS = { ok: "ConcluÃ­da", working: "Pesquisandoâ€¦", pending: "Na fila", failed: "Falhou" };
   const AMOUNT_HINT = {
-    1: "Aproximado · leva ~2 min",
-    5: "Aproximado · leva ~4 min",
-    10: "Aproximado · leva ~7 min",
-    20: "Aproximado · leva 15+ min",
+    1: "Aproximado Â· leva ~2 min",
+    5: "Aproximado Â· leva ~4 min",
+    10: "Aproximado Â· leva ~7 min",
+    20: "Aproximado Â· leva 15+ min",
   };
   const ICON = {
     search: '<svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>',
@@ -49,7 +49,7 @@
     sort: { key: null, dir: 1 }, geo: null, submitting: false, depth: 5, email: false,
   };
 
-  // ───────────────────────── utils ─────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ utils â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function toast(msg, ms = 4000) {
     const t = $("#toast");
     t.textContent = msg; t.hidden = false;
@@ -61,8 +61,8 @@
   function ago(iso) {
     const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
     if (s < 60) return "agora";
-    if (s < 3600) return `há ${Math.floor(s / 60)} min`;
-    if (s < 86400) return `há ${Math.floor(s / 3600)} h`;
+    if (s < 3600) return `hÃ¡ ${Math.floor(s / 60)} min`;
+    if (s < 86400) return `hÃ¡ ${Math.floor(s / 3600)} h`;
     return new Date(iso).toLocaleDateString("pt-BR");
   }
 
@@ -82,7 +82,7 @@
     if (f || row.length) { row.push(f); rows.push(row); }
     const [head, ...body] = rows;
     if (!head) return [];
-    head[0] = head[0].replace(/^﻿/, "");
+    head[0] = head[0].replace(/^ï»¿/, "");
     return body.filter((r) => r.length > 1).map((r) => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ""])));
   }
 
@@ -98,11 +98,11 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
 
-  const slug = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "busca";
+  const slug = (s) => String(s).normalize("NFD").replace(/[Ì€-Í¯]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "busca";
   const digits = (s) => String(s || "").replace(/\D/g, "");
   const emailsOf = (r) => String(r.emails || "").split(/[\s,;]+/).filter((e) => e.includes("@"));
 
-  // Brazilian mobile (DDD + 9xxxxxxxx) → wa.me link.
+  // Brazilian mobile (DDD + 9xxxxxxxx) â†’ wa.me link.
   function whatsapp(phone) {
     let d = digits(phone);
     if (d.startsWith("55") && d.length >= 12) d = d.slice(2);
@@ -117,15 +117,15 @@
     return 2 * R * Math.asin(Math.sqrt(a));
   }
   // Google Maps has no hard radius in normal mode, so we zoom the search viewport to fit the circle
-  // (~1000px wide at 156543·cos(lat)/2^z m/px) and filter results outside it afterwards.
+  // (~1000px wide at 156543Â·cos(lat)/2^z m/px) and filter results outside it afterwards.
   const zoomFor = (meters, lat) => Math.max(11, Math.min(17, Math.round(Math.log2((156543 * Math.cos((lat * Math.PI) / 180) * 1000) / (2 * meters)))));
 
   function starsHTML(rating) {
     const full = Math.round(rating);
-    return `<span class="stars" aria-hidden="true">${"★".repeat(full)}<span class="off">${"★".repeat(5 - full)}</span></span>`;
+    return `<span class="stars" aria-hidden="true">${"â˜…".repeat(full)}<span class="off">${"â˜…".repeat(5 - full)}</span></span>`;
   }
 
-  // ───────────────────────── map ─────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const hasMap = typeof L !== "undefined";
   let map, markerLayer, lookupMarker;
   const markers = {};
@@ -179,7 +179,7 @@
       const lat = +r.latitude, lon = +r.longitude;
       if (!lat || !lon) return;
       markers[i] = L.marker([lat, lon], { icon: pinIcon("#ea4335"), riseOnHover: true })
-        .bindPopup(`<b>${esc(r.title)}</b><br>${esc(r.category)}${r.review_rating ? ` · ${(+r.review_rating).toFixed(1).replace(".", ",")} ★` : ""}${r.phone ? `<br>${esc(r.phone)}` : ""}`)
+        .bindPopup(`<b>${esc(r.title)}</b><br>${esc(r.category)}${r.review_rating ? ` Â· ${(+r.review_rating).toFixed(1).replace(".", ",")} â˜…` : ""}${r.phone ? `<br>${esc(r.phone)}` : ""}`)
         .on("click", () => highlight(i, true))
         .addTo(markerLayer);
       pts.push([lat, lon]);
@@ -194,7 +194,7 @@
     if (el) { el.classList.add("hl"); if (scroll) el.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
   }
 
-  // ───────────────────────── health + jobs ─────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ health + jobs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function setHealth(ok) {
     const h = $("#health");
     h.className = "health " + (ok ? "ok" : "down");
@@ -212,18 +212,18 @@
         const prev = state.prevStatus[j.id];
         if (j.status === "ok" && state.counts[j.id] == null) fetchCount(j);
         if (prev && prev !== j.status && j.status === "ok") notifyDone(j);
-        if (prev && prev !== j.status && j.status === "failed") toast(`A busca “${j.name}” falhou.`);
+        if (prev && prev !== j.status && j.status === "failed") toast(`A busca â€œ${j.name}â€ falhou.`);
         state.prevStatus[j.id] = j.status;
       }
       renderJobs();
       if (!state.booted) { state.booted = true; openFromHash(); }
     } catch {
       setHealth(false);
-      if (!state.jobs.length) $("#jobs").innerHTML = `<p class="empty">Não consegui falar com o scraper.<br>Confira se o Docker Desktop está aberto.</p>`;
+      if (!state.jobs.length) $("#jobs").innerHTML = `<p class="empty">NÃ£o consegui falar com o scraper.<br>Confira se o Docker Desktop estÃ¡ aberto.</p>`;
     }
   }
 
-  // /#job=<id> opens that job directly (used by the Mapa ⇄ Painel switch).
+  // /#job=<id> opens that job directly (used by the Mapa â‡„ Painel switch).
   function openFromHash() {
     const m = location.hash.match(/job=([\w-]+)/);
     const job = m && state.jobs.find((j) => j.id === m[1] && j.status === "ok");
@@ -239,20 +239,20 @@
   }
 
   async function fetchCount(j) {
-    state.counts[j.id] = "…";
+    state.counts[j.id] = "â€¦";
     try { state.counts[j.id] = (await fetchRows(j.id)).length; } catch { state.counts[j.id] = "?"; }
     renderJobs();
   }
 
   async function notifyDone(j) {
-    try { toast(`“${j.name}” terminou: ${(await fetchRows(j.id)).length} resultados`, 6000); }
-    catch { toast(`“${j.name}” terminou`); }
+    try { toast(`â€œ${j.name}â€ terminou: ${(await fetchRows(j.id)).length} resultados`, 6000); }
+    catch { toast(`â€œ${j.name}â€ terminou`); }
   }
 
   function renderJobs() {
     const box = $("#jobs");
     if (!state.jobs.length) {
-      box.innerHTML = `<p class="empty">Nenhuma busca ainda. Faça a primeira acima.</p>`;
+      box.innerHTML = `<p class="empty">Nenhuma busca ainda. FaÃ§a a primeira acima.</p>`;
       renderJobs._last = null;
       return;
     }
@@ -269,9 +269,9 @@
         <div class="job-body">
           <div class="job-title">${esc(j.name || j.keywords.join(", "))}</div>
           <div class="job-meta">${meta}</div>
-          ${j.status === "working" ? '<div class="progress" title="Coletando no Google Maps…"></div>' : ""}
+          ${j.status === "working" ? '<div class="progress" title="Coletando no Google Mapsâ€¦"></div>' : ""}
         </div>
-        <button class="job-del" data-act="delete" title="${j.status === "working" ? "Parar esta busca e apagá-la" : "Apagar esta busca e os resultados dela"}" aria-label="Apagar">${j.status === "working" ? ICON.stop : ICON.del}</button>
+        <button class="job-del" data-act="delete" title="${j.status === "working" ? "Parar esta busca e apagÃ¡-la" : "Apagar esta busca e os resultados dela"}" aria-label="Apagar">${j.status === "working" ? ICON.stop : ICON.del}</button>
       </li>`;
     }).join("");
     // Only touch the DOM when something changed, so polling doesn't eat clicks/hover.
@@ -280,11 +280,11 @@
 
   async function deleteJob(job) {
     const msg = job.status === "working"
-      ? `Parar a busca “${job.name}”? Ela será apagada e o que já foi coletado se perde.`
-      : `Apagar a busca “${job.name}”? Os resultados somem daqui (arquivos já baixados continuam no seu computador).`;
+      ? `Parar a busca â€œ${job.name}â€? Ela serÃ¡ apagada e o que jÃ¡ foi coletado se perde.`
+      : `Apagar a busca â€œ${job.name}â€? Os resultados somem daqui (arquivos jÃ¡ baixados continuam no seu computador).`;
     if (!confirm(msg)) return;
     const r = await apiFetch(`${API}/${job.id}`, { method: "DELETE" });
-    if (!r.ok) return toast("Não consegui apagar essa busca.");
+    if (!r.ok) return toast("NÃ£o consegui apagar essa busca.");
     delete rowsCache[job.id]; delete state.counts[job.id];
     toast("Busca apagada.");
     refreshJobs();
@@ -304,7 +304,7 @@
     if (job) openResults(job);
   });
 
-  // ───────────────────────── form controls ─────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ form controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   $$(".chip[data-depth]").forEach((c) => c.addEventListener("click", () => setDepth(+c.dataset.depth)));
   function setDepth(d) {
     state.depth = d;
@@ -315,7 +315,7 @@
     const km = +$("#radius").value;
     $("#radius-val").textContent = `${km} km`;
     $("#radius").style.setProperty("--fill-pct", `${((km - 1) / 19) * 100}%`);
-    $("#radius-hint").textContent = state.geo ? "Área em volta do local, desenhada no mapa." : "Digite o local acima para ver a área no mapa.";
+    $("#radius-hint").textContent = state.geo ? "Ãrea em volta do local, desenhada no mapa." : "Digite o local acima para ver a Ã¡rea no mapa.";
     if (state.geo && !state.current) drawArea(+state.geo.lat, +state.geo.lon, km * 1000, fit);
   }
   $("#radius").addEventListener("input", () => syncRadius(true));
@@ -326,7 +326,7 @@
     $("#email-note").hidden = !state.email;
   });
 
-  // ───────────────────────── geocoding ─────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ geocoding â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Prefer Brazil first ("Barra Funda" alone would otherwise land on the town in RS), then worldwide.
   const geoCache = load("geo2", {});
   async function nominatim(place, extra) {
@@ -351,32 +351,32 @@
     return g;
   }
 
-  const GEO_HINT = 'Ex.: <em>dentista</em> em <em>Barra Funda, São Paulo</em>. Várias buscas? Separe por vírgula.';
+  const GEO_HINT = 'Ex.: <em>dentista</em> em <em>Barra Funda, SÃ£o Paulo</em>. VÃ¡rias buscas? Separe por vÃ­rgula.';
   let geoTimer;
   async function checkLocation() {
     const place = $("#location").value.trim();
     const hint = $("#geo-status");
     state.geo = null;
     if (!place) { hint.className = "footnote"; hint.innerHTML = GEO_HINT; showLookup(null); return null; }
-    hint.className = "footnote"; hint.textContent = "Localizando no mapa…";
+    hint.className = "footnote"; hint.textContent = "Localizando no mapaâ€¦";
     try {
       const g = await geocode(place);
       if ($("#location").value.trim() !== place) return null;   // user kept typing
-      if (!g) { hint.className = "footnote warn"; hint.textContent = "Não achei esse lugar no mapa. A busca vai usar só o texto."; showLookup(null); return null; }
+      if (!g) { hint.className = "footnote warn"; hint.textContent = "NÃ£o achei esse lugar no mapa. A busca vai usar sÃ³ o texto."; showLookup(null); return null; }
       state.geo = g;
       hint.className = "footnote ok";
-      hint.textContent = "📍 " + g.label;
+      hint.textContent = "ðŸ“ " + g.label;
       showLookup(g);
       syncRadius(false);
       return g;
     } catch {
-      hint.className = "footnote warn"; hint.textContent = "Sem acesso ao serviço de mapas agora. A busca vai usar só o texto.";
+      hint.className = "footnote warn"; hint.textContent = "Sem acesso ao serviÃ§o de mapas agora. A busca vai usar sÃ³ o texto.";
       return null;
     }
   }
   $("#location").addEventListener("input", () => { clearTimeout(geoTimer); geoTimer = setTimeout(checkLocation, 700); });
 
-  // ───────────────────────── submit ─────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function showError(msg) { const e = $("#form-error"); e.textContent = msg; e.hidden = !msg; }
 
   $("#search-form").addEventListener("submit", async (e) => {
@@ -385,22 +385,22 @@
     showError("");
     const terms = $("#keyword").value.split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
     const place = $("#location").value.trim();
-    if (!terms.length) { $("#keyword").focus(); return showError("Diga o que você procura. Ex.: dentista."); }
-    if (!place) { $("#location").focus(); return showError("Diga onde procurar. Ex.: Barra Funda, São Paulo."); }
+    if (!terms.length) { $("#keyword").focus(); return showError("Diga o que vocÃª procura. Ex.: dentista."); }
+    if (!place) { $("#location").focus(); return showError("Diga onde procurar. Ex.: Barra Funda, SÃ£o Paulo."); }
 
     const lang = $("#lang").value, depth = state.depth, email = state.email;
     const keywords = terms.map((t) => `${t} ${JOINER[lang] || "em"} ${place}`);
     const dup = state.jobs.find((j) => (j.status === "pending" || j.status === "working") && j.keywords.join("|") === keywords.join("|"));
-    if (dup && !confirm("Essa mesma busca já está rodando ou na fila. Criar outra igual mesmo assim?")) return;
+    if (dup && !confirm("Essa mesma busca jÃ¡ estÃ¡ rodando ou na fila. Criar outra igual mesmo assim?")) return;
 
     state.submitting = true;
-    const btn = $("#submit"); btn.disabled = true; btn.querySelector(".btn-label").textContent = "Enviando…";
+    const btn = $("#submit"); btn.disabled = true; btn.querySelector(".btn-label").textContent = "Enviandoâ€¦";
     try {
       const g = state.geo || await checkLocation();
-      const autoSecs = Math.min(3600, Math.max(300, terms.length * (120 + depth * 40) * (email ? 2 : 1)));
+      const autoSecs = Math.min(1200, Math.max(180, terms.length * (90 + depth * 25) * (email ? 2 : 1)));
       const maxMin = +$("#maxtime").value;
       const body = {
-        name: `${terms.join(", ")} · ${place.split(",")[0].trim()}`,
+        name: `${terms.join(", ")} Â· ${place.split(",")[0].trim()}`,
         keywords, lang, depth, email,
         // lat/lon only bias the map viewport; the place is also in the keyword text,
         // so an un-geocodable place still works (the API just requires *some* coordinates).
@@ -416,19 +416,19 @@
         throw new Error(msg);
       }
       const busy = state.jobs.some((j) => j.status === "working" || j.status === "pending");
-      toast(busy ? "Busca criada. Ela entra na fila depois da atual." : "Busca criada! Acompanhe em “Suas buscas”.");
+      toast(busy ? "Busca criada. Ela entra na fila depois da atual." : "Busca criada! Acompanhe em â€œSuas buscasâ€.");
       store("prefs", { lang, depth, radius: +$("#radius").value });
       $("#keyword").value = "";
       refreshJobs();
     } catch (err) {
-      showError(err.message || "Não consegui criar a busca. O scraper está online?");
+      showError(err.message || "NÃ£o consegui criar a busca. O scraper estÃ¡ online?");
     } finally {
       state.submitting = false; btn.disabled = false;
       btn.querySelector(".btn-label").textContent = "Pesquisar";
     }
   });
 
-  // ───────────────────────── results ─────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ results â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function insideShare(job, rows) {
     const located = rows.filter((r) => +r.latitude);
     if (!job.lat || !job.radius || !located.length) return 0;
@@ -443,13 +443,13 @@
     $("#panel").scrollTop = 0;
     $("#results-title").textContent = job.name || "Resultados";
     $("#dash-title").textContent = job.name || "Painel";
-    $("#results-sub").textContent = "Carregando…";
+    $("#results-sub").textContent = "Carregandoâ€¦";
     $("#places").innerHTML = "";
     $("#raw-download").href = `${API}/${job.id}/download`;
     $("#raw-download").setAttribute("download", `${slug(job.name)}-completo.csv`);
     if (lookupMarker) lookupMarker.remove();
     try { state.rows = await fetchRows(job.id); }
-    catch { $("#results-sub").textContent = "Não consegui baixar os resultados dessa busca."; return; }
+    catch { $("#results-sub").textContent = "NÃ£o consegui baixar os resultados dessa busca."; return; }
 
     const cats = [...new Set(state.rows.map((r) => r.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
     const counts = Object.fromEntries(cats.map((c) => [c, state.rows.filter((r) => r.category === c).length]));
@@ -464,10 +464,10 @@
     setPressed("#in-radius", hasArea && share >= 0.5);
     if (hasArea && share < 0.5) toast("A maioria dos resultados ficou fora do raio: o local pode ter sido entendido diferente. Filtro de raio desligado.", 7000);
     const n = (f) => state.rows.filter(f).length;
-    const sub = `${state.rows.length} lugares · ${n((r) => r.phone)} com telefone · ${n((r) => r.website)} com site` +
-      (job.email ? ` · ${n((r) => emailsOf(r).length)} com e-mail` : "");
+    const sub = `${state.rows.length} lugares Â· ${n((r) => r.phone)} com telefone Â· ${n((r) => r.website)} com site` +
+      (job.email ? ` Â· ${n((r) => emailsOf(r).length)} com e-mail` : "");
     $("#results-sub").textContent = sub;
-    $("#dash-sub").textContent = `Busca: ${job.keywords.join(" / ")} · ${ago(job.date)}`;
+    $("#dash-sub").textContent = `Busca: ${job.keywords.join(" / ")} Â· ${ago(job.date)}`;
     renderResults();
   }
 
@@ -529,7 +529,7 @@
       return `<li class="place" data-i="${i}">
         <div class="place-name">${esc(r.title)}</div>
         ${rating ? `<div class="rating"><b>${rating.toFixed(1).replace(".", ",")}</b>${starsHTML(rating)}<span>(${fmt(r.review_count)})</span></div>` : ""}
-        <div class="place-line">${esc([r.category, r.address.replace(r.title + " - ", "")].filter(Boolean).join(" · "))}</div>
+        <div class="place-line">${esc([r.category, r.address.replace(r.title + " - ", "")].filter(Boolean).join(" Â· "))}</div>
         ${r.phone ? `<div class="place-line phone">${esc(r.phone)}</div>` : ""}
         ${mails.length ? `<div class="place-line mail">${mails.map((m) => `<a href="mailto:${esc(m)}">${esc(m)}</a>`).join(", ")}</div>` : ""}
         <div class="place-actions">
@@ -563,7 +563,7 @@
     if (m) { focusPoint(m.getLatLng(), Math.max(map.getZoom(), 16)); setTimeout(() => m.openPopup(), 700); }
   });
 
-  // ───────────────────────── dashboard ("Painel") ─────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ dashboard ("Painel") â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Everything here reflects the current filters, so the side panel and the dashboard always agree.
   function renderDash() {
     const rows = state.visible;
@@ -578,10 +578,10 @@
     const kpis = [
       ["Empresas", fmt(total), total < state.rows.length ? `de ${fmt(state.rows.length)} (com filtros)` : "todas desta busca"],
       ["Com telefone", fmt(phone), `${pct(phone, total)}% das empresas`],
-      ["Com WhatsApp", fmt(wa), "celulares (dá para chamar direto)"],
+      ["Com WhatsApp", fmt(wa), "celulares (dÃ¡ para chamar direto)"],
       ["Com site", fmt(site), `${pct(site, total)}% das empresas`],
-      job.email ? ["Com e-mail", fmt(mail), `${pct(mail, total)}% (achados nos sites)`] : ["E-mails", "—", "busca feita sem e-mail"],
-      ["Nota média", avg ? avg.toFixed(1).replace(".", ",") + " ★" : "—", `${fmt(reviews)} avaliações no total`],
+      job.email ? ["Com e-mail", fmt(mail), `${pct(mail, total)}% (achados nos sites)`] : ["E-mails", "â€”", "busca feita sem e-mail"],
+      ["Nota mÃ©dia", avg ? avg.toFixed(1).replace(".", ",") + " â˜…" : "â€”", `${fmt(reviews)} avaliaÃ§Ãµes no total`],
     ];
     $("#dash-kpis").innerHTML = kpis.map(([l, v, h]) => `<div class="kpi"><span class="kpi-label">${esc(l)}</span><span class="kpi-value">${esc(v)}</span><span class="kpi-hint">${esc(h)}</span></div>`).join("");
 
@@ -595,7 +595,7 @@
     $("#dash-cats").innerHTML = cats.map(([c, v]) => `<li class="bar clickable ${c === active ? "on" : ""}" data-cat="${esc(c)}" title="Filtrar por ${esc(c)}">
       <span class="bar-name">${esc(c)}</span><span class="bar-val">${fmt(v)}</span>
       <span class="bar-track"><span class="bar-fill" style="width:${(v / max) * 100}%"></span></span></li>`).join("") +
-      (active ? `<li class="bar clickable" data-cat=""><span class="bar-name" style="color:var(--blue)">✕ Mostrar todas as categorias</span></li>` : "");
+      (active ? `<li class="bar clickable" data-cat=""><span class="bar-name" style="color:var(--blue)">âœ• Mostrar todas as categorias</span></li>` : "");
 
     const contacts = [
       ["Telefone", phone, "green"], ["WhatsApp (celular)", wa, "green"], ["Site", site, ""],
@@ -616,8 +616,8 @@
       <td style="white-space:nowrap">${esc(r.phone)}${whatsapp(r.phone) ? ` <a href="${whatsapp(r.phone)}" target="_blank" rel="noopener" title="Abrir no WhatsApp" style="color:var(--green)">WA</a>` : ""}</td>
       <td>${emailsOf(r).map((m) => `<a href="mailto:${esc(m)}">${esc(m)}</a>`).join("<br>")}</td>
       <td>${r.website ? `<a href="${esc(r.website)}" target="_blank" rel="noopener">${esc(r.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "").slice(0, 36))}</a>` : ""}</td>
-      <td class="num">${+r.review_rating ? (+r.review_rating).toFixed(1).replace(".", ",") : "—"}</td>
-      <td class="num">${r.review_count ? fmt(r.review_count) : "—"}</td>
+      <td class="num">${+r.review_rating ? (+r.review_rating).toFixed(1).replace(".", ",") : "â€”"}</td>
+      <td class="num">${r.review_count ? fmt(r.review_count) : "â€”"}</td>
       <td>${esc(r.address)}</td>
     </tr>`).join("") : `<tr><td colspan="8" class="empty">Nenhuma empresa com esses filtros.</td></tr>`;
   }
@@ -641,8 +641,8 @@
     renderResults();
   });
 
-  // ───────────────────────── export ─────────────────────────
-  const EXPORT_HEAD = ["Nome", "Categoria", "Telefone", "WhatsApp", "E-mail", "Site", "Nota", "Avaliações", "Endereço", "Link Google Maps"];
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const EXPORT_HEAD = ["Nome", "Categoria", "Telefone", "WhatsApp", "E-mail", "Site", "Nota", "AvaliaÃ§Ãµes", "EndereÃ§o", "Link Google Maps"];
   const exportRow = (r) => [
     r.title, r.category, r.phone, whatsapp(r.phone) || "", emailsOf(r).join(", "), r.website,
     +r.review_rating ? (+r.review_rating).toFixed(1).replace(".", ",") : "", r.review_count, r.address, r.link,
@@ -657,19 +657,19 @@
     const kind = btn.dataset.export;
     if (kind === "excel") {
       // Excel pt-BR expects ';' as separator; the BOM makes it read UTF-8 accents correctly.
-      saveFile(`${base}.csv`, "﻿" + toCSV(EXPORT_HEAD, rows, ";"), "text/csv;charset=utf-8");
-      toast(`${rows.length} empresas baixadas. Dê dois cliques no arquivo para abrir no Excel.`);
+      saveFile(`${base}.csv`, "ï»¿" + toCSV(EXPORT_HEAD, rows, ";"), "text/csv;charset=utf-8");
+      toast(`${rows.length} empresas baixadas. DÃª dois cliques no arquivo para abrir no Excel.`);
     } else if (kind === "sheets") {
-      saveFile(`${base}-sheets.csv`, "﻿" + toCSV(EXPORT_HEAD, rows, ","), "text/csv;charset=utf-8");
-      toast("Baixado. No Google Sheets: Arquivo → Importar → Upload.", 6000);
+      saveFile(`${base}-sheets.csv`, "ï»¿" + toCSV(EXPORT_HEAD, rows, ","), "text/csv;charset=utf-8");
+      toast("Baixado. No Google Sheets: Arquivo â†’ Importar â†’ Upload.", 6000);
     } else if (kind === "copy") {
       const tsv = [EXPORT_HEAD, ...rows].map((r) => r.map((v) => String(v ?? "").replace(/[\t\r\n]+/g, " ")).join("\t")).join("\n");
       try { await navigator.clipboard.writeText(tsv); toast(`${rows.length} linhas copiadas. Cole (Ctrl+V) no Sheets ou Excel.`); }
-      catch { toast("O navegador bloqueou a cópia. Use os botões de download."); }
+      catch { toast("O navegador bloqueou a cÃ³pia. Use os botÃµes de download."); }
     }
   });
 
-  // ───────────────────────── keyboard ─────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ keyboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   $("#keyword").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !$("#location").value.trim()) { e.preventDefault(); $("#location").focus(); }
   });
@@ -681,7 +681,7 @@
     }
   });
 
-  // ───────────────────────── boot ─────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ boot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const prefs = load("prefs", {});
   if (prefs.lang) $("#lang").value = prefs.lang;
   setDepth(prefs.depth || 5);
@@ -689,5 +689,5 @@
   syncRadius(false);
   refreshJobs();
   setInterval(refreshJobs, POLL_MS);
-  setInterval(() => { renderJobs._last = null; renderJobs(); }, 30000);  // keep "há X min" fresh
+  setInterval(() => { renderJobs._last = null; renderJobs(); }, 30000);  // keep "hÃ¡ X min" fresh
 })();
