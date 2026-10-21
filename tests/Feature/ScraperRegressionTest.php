@@ -48,6 +48,11 @@ Cafe,p1
   $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'unknown','scraper_slot_acquired'=>1]);
   $this->assertSame($before,DB::table('scraper_capacity')->where('id',1)->value('used'));
  }
+ public function test_unknown_job_without_remote_id_can_be_deleted(): void {
+  $job=$this->job(['status'=>'unknown','scraper_job_id'=>null]);
+  $this->actingAs($job->user)->delete('/api/v1/jobs/'.$job->id)->assertNoContent();
+  $this->assertDatabaseMissing('prospecting_jobs',['id'=>$job->id]);
+ }
  public function test_reconcile_requeues_unknown_with_external_id_without_posting(): void {
   Queue::fake(); $job=$this->job(['status'=>'unknown','polling_claimed_at'=>now()->subMinutes(11)]);
   $this->artisan('scraper:reconcile')->assertExitCode(0); Queue::assertPushed(PollScrapingJob::class,fn($j)=>$j->jobId===$job->id);
