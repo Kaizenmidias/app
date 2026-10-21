@@ -70,6 +70,11 @@ button, input, select { font: inherit; }
 .scraper-shell-header p { margin: 0; font-size: 13px; }
 .scraper-shell-header strong { color: var(--shell-text); font-weight: 600; }
 .scraper-shell-avatar { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: #fff; background: var(--shell-blue); font-size: 15px; font-weight: 700; }
+.dashboard-embedded > .scraper-shell-header, .prospecting-embedded > .scraper-shell-header { position: fixed; top: 18px; right: 24px; z-index: 1000; margin: 0; }
+.module-card input:focus, .module-card textarea:focus { border-color: var(--shell-blue); outline: 3px solid rgba(26,115,232,.16); }
+.module-card input, .module-card textarea { min-height: 42px; padding: 10px 12px; border: 1px solid var(--shell-separator); border-radius: 10px; background: rgba(255,255,255,.9); color: var(--shell-text); }
+.module-card button:hover { background: var(--shell-blue-press); }
+.form-errors ul { margin: 0; padding-left: 18px; }
 .scraper-shell-kaizen-logo { align-self: center; width: 42px; height: 42px; object-fit: contain; margin-top: 2px; }
 .scraper-shell-legal { color: var(--shell-faint); font-size: 10px; }
 @media (max-width: 900px) {

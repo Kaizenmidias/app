@@ -11,7 +11,8 @@ class ProspectingController extends Controller
     {
         $html = file_get_contents(resource_path('views/prospecting.html'));
         $shell = view("components.scraper-sidebar")->render();
-        $html = str_replace('<body>', '<body class="prospecting-embedded">'.$shell, $html);
+        $header = view('components.account-header')->render();
+        $html = str_replace('<body>', '<body class="prospecting-embedded">'.$shell.$header, $html);
         // Keep the original panel as the scraper's functional surface. Its
         // legacy header is hidden by scoped CSS; IDs and event targets remain.
         $html = str_replace('<aside class="sidebar glass" id="panel">', '<aside class="sidebar glass prospecting-functional-panel" id="panel">', $html);
