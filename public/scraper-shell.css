@@ -93,3 +93,6 @@ button, input, select { font: inherit; }
     .scraper-shell-main { margin-left: 0; padding: 12px 16px 40px; }
     .scraper-shell-header { justify-content: space-between; margin: 0 0 12px; }
 }
+.scraper-shell-footer .scraper-shell-brand { padding: 4px 0; gap: 8px; }
+.scraper-shell-footer .scraper-shell-brand strong { font-size: 13px; }
+.scraper-shell-footer .scraper-shell-kaizen-logo { align-self: auto; width: 34px; height: 34px; margin: 0; }

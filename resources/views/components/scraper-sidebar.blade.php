@@ -26,5 +26,4 @@
 <a href="{{ $href }}" @class(['is-active'=>request()->routeIs($target)||($target==='prospecting'&&request()->routeIs('prospecting'))])>{!! $icon !!}<span>{{ $label }}</span></a>
 @endforeach
 </nav>
-<div class="scraper-shell-footer"><span class="scraper-shell-account">{{ auth()->user()->email }}</span><form method="post" action="{{ route('logout') }}">@csrf<button type="submit" class="scraper-shell-logout">Sair</button></form><img class="scraper-shell-kaizen-logo" src="{{ asset('auth/logo-kaizen.png') }}" alt="Kaizen Mídias" width="42" height="42"><small class="scraper-shell-legal">Google Maps Scraper · licença MIT</small></div>
-</aside>
+<div class="scraper-shell-footer"><div class="scraper-shell-brand"><img class="scraper-shell-kaizen-logo" src="{{ asset('auth/logo-kaizen.png') }}" alt="Kaizen Mídias" width="34" height="34"><strong>Kaizen Mídias</strong></div><span class="scraper-shell-account">{{ auth()->user()->email }}</span><form method="post" action="{{ route('logout') }}">@csrf<button type="submit" class="scraper-shell-logout">Sair</button></form><small class="scraper-shell-legal">Google Maps Scraper · licença MIT</small></div></aside>
