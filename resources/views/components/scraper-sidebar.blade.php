@@ -1,5 +1,11 @@
 <aside class="scraper-shell-sidebar prospecting-shell-sidebar" aria-label="Navegação principal">
-<a class="scraper-shell-brand" href="{{ route('dashboard') }}"><img src="{{ asset('app/img/logo.png') }}" alt="" width="34" height="34"><span><strong>Parceiros Kaizen</strong><small>Kaizen Mídias</small></span></a>
+@php($user = auth()->user())
+@php($firstName = trim((string) optional($user)->name))
+@php($firstName = $firstName !== '' ? preg_split('/\s+/', $firstName)[0] : 'Parceiro')
+<div class="scraper-shell-profile">
+    @if($user?->profile_photo_path)<img class="scraper-shell-profile-image" src="{{ route('account.photo') }}" alt="Foto de {{ $user->name }}" width="42" height="42">@else<span class="scraper-shell-profile-avatar" aria-label="Avatar de {{ $user?->name ?: 'Parceiro' }}">{{ mb_strtoupper(mb_substr($firstName, 0, 1)) }}</span>@endif
+    <span><strong>Bem-vindo, {{ $firstName }}</strong><small>Parceiros Kaizen</small></span>
+</div>
 <nav class="scraper-shell-nav">
 @foreach([
 ['dashboard','<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>','Visão geral'],

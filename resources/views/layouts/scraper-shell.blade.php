@@ -16,7 +16,6 @@
     <x-scraper-sidebar />
 
     <main class="scraper-shell-main">
-        <x-account-header />
         @yield('content')
     </main>
     @stack('scripts')
