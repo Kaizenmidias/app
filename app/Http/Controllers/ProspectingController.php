@@ -24,7 +24,7 @@ class ProspectingController extends Controller
             $html,
         );
         $html = str_replace('/app/app.js', '/app/app.js?v='.$appScriptVersion, $html);
-        return response($html)->header('Content-Type', 'text/html; charset=UTF-8')->cookie('XSRF-TOKEN', csrf_token(), 120, '/', null, app()->environment('production'), false, false, 'lax');
+        return response($html)->header('Content-Type', 'text/html; charset=UTF-8')->header('Cache-Control', 'no-store, private')->cookie('XSRF-TOKEN', csrf_token(), 120, '/', null, app()->environment('production'), false, false, 'lax');
     }    public function store(Request $request) {
         $data=$request->validate(['keywords'=>'required|array|min:1','keywords.*'=>'string|max:255','location'=>'nullable|string|max:255','latitude'=>'nullable|numeric','longitude'=>'nullable|numeric','search_parameters'=>'nullable|array']);
         $job=$request->user()->prospectingJobs()->create(['keywords'=>$data['keywords'],'location'=>$data['location']??null,'latitude'=>$data['latitude']??null,'longitude'=>$data['longitude']??null,'search_parameters'=>$data['search_parameters']??[],'status'=>'pending']);

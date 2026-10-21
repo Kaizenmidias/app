@@ -21,6 +21,6 @@ class DashboardController extends Controller
             $html,
         );
         $html = str_replace('/app/painel.js', '/app/painel.js?v='.$panelScriptVersion, $html);
-        return response($html)->header('Content-Type', 'text/html; charset=UTF-8')->cookie('XSRF-TOKEN', csrf_token(), 120, '/', null, app()->environment('production'), false, false, 'lax');
+        return response($html)->header('Content-Type', 'text/html; charset=UTF-8')->header('Cache-Control', 'no-store, private')->cookie('XSRF-TOKEN', csrf_token(), 120, '/', null, app()->environment('production'), false, false, 'lax');
     }
 }
