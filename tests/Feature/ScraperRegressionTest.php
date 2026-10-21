@@ -52,7 +52,7 @@ Cafe,p1
   $job=$this->job(['status'=>'unknown','scraper_job_id'=>null]);
   $this->get('/login'); $token=csrf_token();
   $this->actingAs($job->user)->withHeader('X-CSRF-TOKEN', $token)->delete('/api/v1/jobs/'.$job->id)->assertNoContent();
-  $this->assertDatabaseMissing('prospecting_jobs',['id'=>$job->id]);
+  $this->assertSoftDeleted('prospecting_jobs',['id'=>$job->id]);
  }
  public function test_reconcile_requeues_unknown_with_external_id_without_posting(): void {
   Queue::fake(); $job=$this->job(['status'=>'unknown','polling_claimed_at'=>now()->subMinutes(11)]);
