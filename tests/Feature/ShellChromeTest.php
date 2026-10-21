@@ -22,7 +22,7 @@ class ShellChromeTest extends TestCase
         $response->assertOk()
             ->assertSee('Bem-vindo,')
             ->assertSee('Ana')
-            ->assertSee('account.css?v=158')
+            ->assertSee('account.css?v=')
             ->assertSee('account-page')
             ->assertSee('module-card')
             ->assertSee('Minha conta')

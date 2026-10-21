@@ -11,11 +11,17 @@ class ProspectingController extends Controller
     {
         $html = file_get_contents(resource_path('views/prospecting.html'));
         $shell = view("components.scraper-sidebar")->render();
+        $shellVersion = filemtime(public_path('scraper-shell.css'));
+        $prospectingVersion = filemtime(public_path('prospecting-shell.css'));
         $html = str_replace('<body>', '<body class="prospecting-embedded">'.$shell, $html);
         // Keep the original panel as the scraper's functional surface. Its
         // legacy header is hidden by scoped CSS; IDs and event targets remain.
         $html = str_replace('<aside class="sidebar glass" id="panel">', '<aside class="sidebar glass prospecting-functional-panel" id="panel">', $html);
-        $html = str_replace('</head>', '<link rel="stylesheet" href="/scraper-shell.css"><link rel="stylesheet" href="/prospecting-shell.css"></head>', $html);
+        $html = str_replace(
+            '</head>',
+            '<link rel="stylesheet" href="'.asset('scraper-shell.css').'?v='.$shellVersion.'"><link rel="stylesheet" href="'.asset('prospecting-shell.css').'?v='.$prospectingVersion.'"></head>',
+            $html,
+        );
         return response($html)->header('Content-Type', 'text/html; charset=UTF-8')->cookie('XSRF-TOKEN', csrf_token(), 120, '/', null, app()->environment('production'), false, false, 'lax');
     }    public function store(Request $request) {
         $data=$request->validate(['keywords'=>'required|array|min:1','keywords.*'=>'string|max:255','location'=>'nullable|string|max:255','latitude'=>'nullable|numeric','longitude'=>'nullable|numeric','search_parameters'=>'nullable|array']);

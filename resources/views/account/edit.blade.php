@@ -1,6 +1,6 @@
 @extends('layouts.scraper-shell')
 @section('title', 'Minha conta · Parceiros Kaizen')
-@push('styles')<link rel="stylesheet" href="{{ asset('account.css') }}?v=158">@endpush
+@push('styles')<link rel="stylesheet" href="{{ asset('account.css') }}?v={{ filemtime(public_path('account.css')) }}">@endpush
 @section('content')
 <div class="account-page">
 <header class="account-page-header"><div><p class="module-eyebrow">Conta</p><h1>Minha conta</h1><p class="module-description">Gerencie suas informações pessoais e configurações de segurança.</p></div></header>
@@ -15,5 +15,5 @@
 <section class="module-card account-card" aria-labelledby="security-title"><div class="account-card-heading"><div><p class="module-eyebrow">Proteção</p><h2 id="security-title">Segurança</h2></div><span class="account-card-icon" aria-hidden="true">&#9679;</span></div><p class="account-card-description">Atualize sua senha para manter sua conta protegida.</p><form method="post" action="{{ route('account.password') }}" class="account-form">@csrf @method('PUT')<label for="current-password">Senha atual<input id="current-password" type="password" name="current_password" autocomplete="current-password" required></label><label for="new-password">Nova senha<input id="new-password" type="password" name="password" autocomplete="new-password" required></label><label for="password-confirmation">Confirmar nova senha<input id="password-confirmation" type="password" name="password_confirmation" autocomplete="new-password" required></label><button type="submit" class="button button-primary">Atualizar senha</button></form></section>
 </div></div>
 @endsection
-@push('scripts')<script>document.getElementById('profile-photo-input')?.addEventListener('change',function(){const f=this.files?.[0],p=document.getElementById('profile-photo-preview'),a=document.getElementById('profile-photo-fallback');if(!f||!p||!f.type.startsWith('image/')){this.value='';return;}p.src=URL.createObjectURL(f);p.hidden=false;if(a)a.hidden=true;document.getElementById('save-photo-button')?.removeAttribute('hidden');});</script>@endpush
+@push('scripts')<script>document.getElementById('profile-photo-input')?.addEventListener('change',function(){const f=this.files?.[0],p=document.getElementById('profile-photo-preview'),a=document.getElementById('profile-photo-fallback'),s=document.getElementById('save-photo-button');if(!f||!p||!f.type.startsWith('image/')){this.value='';if(s)s.hidden=true;return;}p.src=URL.createObjectURL(f);p.hidden=false;if(a)a.hidden=true;if(s)s.hidden=false;});</script>@endpush
 

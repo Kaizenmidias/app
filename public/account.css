@@ -12,7 +12,8 @@
 .account-profile-copy p:not(.module-eyebrow) { margin: 0 0 7px; color: var(--shell-muted); }
 .account-profile-copy small { color: var(--shell-faint); }
 .account-profile-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
-.account-profile-actions form { margin: 0; }
+.account-profile-actions form { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 0; }
+.account-profile-actions [hidden] { display: none !important; }
 .account-file-button { display: inline-flex !important; align-items: center; justify-content: center; cursor: pointer; }
 .account-file-button input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .account-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }

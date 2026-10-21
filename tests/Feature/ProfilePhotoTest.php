@@ -49,4 +49,15 @@ class ProfilePhotoTest extends TestCase
         $user = User::factory()->create(['email_verified_at' => now()]);
         $this->actingAs($user)->post('/minha-conta/foto', ['photo' => UploadedFile::fake()->create('note.txt', 10, 'text/plain')])->assertSessionHasErrors('photo');
     }
+
+    public function test_photo_form_starts_with_save_action_hidden(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $this->actingAs($user)->get('/minha-conta')
+            ->assertOk()
+            ->assertSee('enctype="multipart/form-data"', false)
+            ->assertSee('id="profile-photo-input"', false)
+            ->assertSee('id="save-photo-button" type="submit" class="button button-primary" hidden', false);
+    }
 }
