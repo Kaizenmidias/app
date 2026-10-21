@@ -13,9 +13,15 @@
     @stack('styles')
 </head>
 <body class="scraper-shell-page">
-    <x-scraper-sidebar />ide>
+    <x-scraper-sidebar />
 
     <main class="scraper-shell-main">
+        @php($firstName = trim((string) optional(auth()->user())->name))
+        @php($firstName = $firstName !== '' ? preg_split('/\\s+/', $firstName)[0] : 'Parceiro')
+        <header class="scraper-shell-header">
+            <p>Bem-vindo, <strong>{{ $firstName }}</strong></p>
+            <span class="scraper-shell-avatar" aria-label="Avatar de {{ auth()->user()->name ?: 'Parceiro' }}">{{ mb_strtoupper(mb_substr($firstName, 0, 1)) }}</span>
+        </header>
         @yield('content')
     </main>
     @stack('scripts')
