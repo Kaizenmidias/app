@@ -40,6 +40,7 @@
       status: (j.Status || j.status || "").toLowerCase(), keywords: d.keywords || [],
       depth: d.depth, email: d.email, lang: d.lang,
       lat: +d.lat || 0, lon: +d.lon || 0, radius: +d.radius || 0,
+      report: d.import_report || d.importReport || null,
     };
   };
 
@@ -268,6 +269,7 @@
         <div class="job-body">
           <div class="job-title">${esc(j.name || j.keywords.join(", "))}</div>
           <div class="job-meta">${meta}</div>
+          ${j.status === "ok" && j.report ? `<div class="job-report">Leads solicitados: ${esc(j.report.requested)} · Novos leads: ${esc(j.report.added)} · Duplicados: ${esc(j.report.duplicates)} · Resultado final: ${esc(j.report.total)} adicionados</div>` : ""}
           ${j.status === "working" ? '<div class="progress" title="Coletando no Google Maps…"></div>' : ""}
         </div>
         <button class="job-del" data-act="delete" title="${j.status === "working" ? "Parar esta busca e apagá-la" : "Apagar esta busca e os resultados dela"}" aria-label="Apagar">${j.status === "working" ? ICON.stop : ICON.del}</button>

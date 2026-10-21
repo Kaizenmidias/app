@@ -32,7 +32,13 @@ class RunScrapingJob implements ShouldQueue
             $current->update(['scraper_slot_acquired' => true, 'status' => 'working', 'started_at' => $current->started_at ?: now(), 'progress' => 1, 'submission_intent_at' => now(), 'submission_attempt_token' => $attemptToken]);
             return true;
         }, 3);
-        if (!$claimed) { return; }
+        if (!$claimed) {
+            $pending = ProspectingJob::query()->find($this->jobId);
+            if ($pending && $pending->status === 'pending' && !$pending->scraper_job_id && $pending->created_at?->gt(now()->subMinutes(30))) {
+                self::dispatch($this->jobId)->delay(now()->addSeconds(15));
+            }
+            return;
+        }
 
         $job = ProspectingJob::query()->findOrFail($this->jobId);
         try {
