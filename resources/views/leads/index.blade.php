@@ -3,7 +3,7 @@
 @section('title', 'Leads · Parceiros Kaizen')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('leads.css') }}">
+    <link rel="stylesheet" href="{{ asset('leads.css') }}?v={{ filemtime(public_path('leads.css')) }}">
 @endpush
 
 @section('content')

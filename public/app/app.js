@@ -292,7 +292,7 @@
 
   $("#jobs").addEventListener("click", (e) => {
     const li = e.target.closest(".job");
-    const job = li && state.jobs.find((j) => j.id === li.dataset.id);
+    const job = li && state.jobs.find((j) => String(j.id) === String(li.dataset.id));
     if (!job) return;
     if (e.target.closest("[data-act=delete]")) return deleteJob(job);
     if (job.status === "ok") openResults(job);
@@ -300,7 +300,7 @@
   $("#jobs").addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     const li = e.target.closest(".job.ok");
-    const job = li && state.jobs.find((j) => j.id === li.dataset.id);
+    const job = li && state.jobs.find((j) => String(j.id) === String(li.dataset.id));
     if (job) openResults(job);
   });
 
