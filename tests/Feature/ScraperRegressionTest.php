@@ -50,7 +50,7 @@ Cafe,p1
  }
  public function test_unknown_job_without_remote_id_can_be_deleted(): void {
   $job=$this->job(['status'=>'unknown','scraper_job_id'=>null]);
-  $this->actingAs($job->user)->withHeader('X-CSRF-TOKEN', session()->token())->delete('/api/v1/jobs/'.$job->id)->assertNoContent();
+  $this->actingAs($job->user)->withHeader('X-CSRF-TOKEN', csrf_token())->delete('/api/v1/jobs/'.$job->id)->assertNoContent();
   $this->assertDatabaseMissing('prospecting_jobs',['id'=>$job->id]);
  }
  public function test_reconcile_requeues_unknown_with_external_id_without_posting(): void {
