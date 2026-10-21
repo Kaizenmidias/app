@@ -1,4 +1,4 @@
-<aside class="scraper-shell-sidebar prospecting-shell-sidebar" aria-label="Navegação principal">
+<aside id="scraper-sidebar" class="scraper-shell-sidebar prospecting-shell-sidebar" aria-label="Navegação principal">
 @php($user = auth()->user())
 @php($firstName = trim((string) optional($user)->name))
 @php($firstName = $firstName !== '' ? preg_split('/\s+/', $firstName)[0] : 'Parceiro')
