@@ -407,6 +407,7 @@
         lat: g ? g.lat : "0", lon: g ? g.lon : "0",
         zoom: g ? zoomFor(radiusMeters(), +g.lat) : 14, radius: radiusMeters(),
         fast_mode: false, max_time: maxMin ? maxMin * 60 : autoSecs,
+        lead_list_id: $("#lead_list_id")?.value || null,
       };
       const r = await apiFetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       if (!r.ok) {

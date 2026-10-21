@@ -7,6 +7,7 @@
 @endpush
 
 @section('content')
+    <section class="lead-lists"><h2>Listas de Leads</h2><form method="post" action="{{ route('leads.lists.store') }}">@csrf<input name="name" required maxlength="120" placeholder="Nome da lista"><button type="submit">Criar lista</button></form>@if($lists->isNotEmpty())<div class="lead-list-chips">@foreach($lists as $list)<span>{{ $list->name }} ({{ $list->leads()->count() }})</span>@endforeach</div>@endif</section>
     <header class="module-header">
         <div>
             <p class="module-eyebrow">Módulo</p>
@@ -30,7 +31,8 @@
     @else
         <div class="lead-list">
             @foreach($leads as $lead)
-                <article class="lead-card">
+<article class="lead-card">
+ @if($lead->list)<p class="lead-card__list">Lista: {{ $lead->list->name }}</p>@endif
                     <div class="lead-card-main">
                         <p class="lead-card-source">{{ $lead->job?->location ?: 'Busca de prospecção' }}</p>
                         <h2>{{ $lead->name ?: 'Empresa sem nome' }}</h2>
