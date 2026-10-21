@@ -54,6 +54,12 @@ Cafe,p1
   $this->actingAs($job->user)->withHeader('X-CSRF-TOKEN', $token)->delete('/api/v1/jobs/'.$job->id)->assertNoContent();
   $this->assertSoftDeleted('prospecting_jobs',['id'=>$job->id]);
  }
+ public function test_pending_job_without_remote_id_can_be_deleted(): void {
+  $job=$this->job(['status'=>'pending','scraper_job_id'=>null]);
+  $this->get('/login'); $token=csrf_token();
+  $this->actingAs($job->user)->withHeader('X-CSRF-TOKEN', $token)->delete('/api/v1/jobs/'.$job->id)->assertNoContent();
+  $this->assertSoftDeleted('prospecting_jobs',['id'=>$job->id]);
+ }
  public function test_reconcile_requeues_unknown_with_external_id_without_posting(): void {
   Queue::fake(); $job=$this->job(['status'=>'unknown','polling_claimed_at'=>now()->subMinutes(11)]);
   $this->artisan('scraper:reconcile')->assertExitCode(0); Queue::assertPushed(PollScrapingJob::class,fn($j)=>$j->jobId===$job->id);
