@@ -77,9 +77,9 @@ class PipelineTest extends TestCase
         $u = $this->user();
         $this->actingAs($u)->post('/pipeline/stages', ['name' => 'Proposta']);
         $stage = $u->pipelineStages()->first();
-        $lead = Lead::create(['user_id'=>$u->id,'name'=>'Empresa Orçamento','source'=>'apify_google_places','budget_value'=>'2500.00','sector'=>'Serviços','address'=>'Rua Central']);
+        $lead = Lead::create(['user_id'=>$u->id,'name'=>'Empresa Orçamento','source'=>'apify_google_places','budget_value'=>'2500.00','sector'=>'Serviços','address'=>'Rua Central','raw_data'=>['city'=>'Salvador','stateCode'=>'BA']]);
         PipelineOpportunity::create(['user_id'=>$u->id,'lead_id'=>$lead->id,'pipeline_stage_id'=>$stage->id]);
         $response = $this->actingAs($u)->get('/pipeline');
-        $response->assertOk()->assertSee('R$ 2.500,00')->assertSee('lead-dialog-'.$lead->id)->assertSee('Informações do lead')->assertSee('Rua Central')->assertDontSee('apify_google_places')->assertDontSee('pipeline-move-select')->assertDontSee('pipeline-select');
+        $response->assertOk()->assertSee('R$ 2.500,00')->assertSee('Salvador / BA')->assertSee('lead-dialog-'.$lead->id)->assertSee('Informações do lead')->assertSee('Rua Central')->assertDontSee('apify_google_places')->assertDontSee('pipeline-move-select')->assertDontSee('pipeline-select')->assertDontSee('opportunity-meta');
     }
 }

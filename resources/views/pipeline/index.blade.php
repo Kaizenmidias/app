@@ -92,15 +92,13 @@
                     <div class="pipeline-cards" data-drop-target="{{ $stage->id }}">
                         @forelse($stage->opportunities as $opportunity)
                             @php($lead = $opportunity->lead)
+                            @php($leadCity = data_get($lead->raw_data, 'city') ?: data_get($lead->raw_data, 'cityName'))
+                            @php($leadState = data_get($lead->raw_data, 'stateCode') ?: data_get($lead->raw_data, 'state'))
+                            @php($leadLocation = implode(' / ', array_filter([$leadCity, $leadState])))
                             <article class="opportunity-card" draggable="true" role="button" tabindex="0" data-dialog-open="lead-dialog-{{ $lead->id }}" data-opportunity-id="{{ $opportunity->id }}" data-budget="{{ (float) ($lead->budget_value ?? 0) }}" data-move-url="{{ route('pipeline.move', $opportunity) }}" aria-label="Abrir informações de {{ $lead->name ?: 'Empresa sem nome' }}">
-                                <div class="opportunity-card-head"><span class="opportunity-drag" aria-hidden="true">⠿</span><span class="opportunity-card-hint">Ver detalhes</span></div>
                                 <h3>{{ $opportunity->lead->name ?: 'Empresa sem nome' }}</h3>
                                 <strong class="opportunity-budget">R$ {{ number_format((float) ($lead->budget_value ?? 0), 2, ',', '.') }}</strong>
-                                <div class="opportunity-meta">
-                                    @if($opportunity->lead->phone)<span>☎ {{ $opportunity->lead->phone }}</span>@endif
-                                    @if($opportunity->lead->category)<span>{{ $opportunity->lead->category }}</span>@endif
-                                    @if($opportunity->lead->address)<span>{{ $opportunity->lead->address }}</span>@endif
-                                </div>
+                                <span class="opportunity-location">{{ $leadLocation ?: 'Localização não informada' }}</span>
                             </article>
                             <dialog id="lead-dialog-{{ $lead->id }}" class="pipeline-dialog pipeline-lead-dialog">
                                 <div class="pipeline-lead-detail">

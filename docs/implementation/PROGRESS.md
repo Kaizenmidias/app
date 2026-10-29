@@ -300,3 +300,9 @@ No credentials, cookies, tokens, password hashes, live payloads or personal clie
 - Security and ownership are unchanged: the Pipeline still loads only stages and opportunities owned through the authenticated user, and move requests retain the existing authorization and same-user destination checks.
 - Local validation: `LeadsPageTest` passed 7 tests/30 assertions; `PipelineTest` passed 9 tests/34 assertions; JavaScript syntax, Blade compilation and `git diff --check` passed. Static inspection found Apify references only in `resources/views/account/edit.blade.php`.
 - No migration or database change is required. Browser-authenticated visual and drag interaction validation remains an operational smoke-test limitation until a suitable authorized session is available.
+
+### Compact Pipeline opportunity cards (2026-10-29)
+
+- Approved scope: reduce Pipeline column/card width and retain only the lead name, budget and structured city/state on each card; the complete lead information remains in the click-opened modal.
+- City/state are read from structured scraper data (`city`/`cityName` and `stateCode`/`state`). Missing structured location is shown as `Localização não informada`; no address parsing or inferred location was introduced.
+- Local validation: `PipelineTest` passed 9 tests/36 assertions; JavaScript syntax, Blade compilation and `git diff --check` passed. No migration or backend behavior change is required.
