@@ -87,6 +87,8 @@ class ScraperClient
             'phone' => $item['phone'] ?? $item['phoneUnformatted'] ?? null,
             'emails' => is_array($item['emails'] ?? null) ? implode(', ', $item['emails']) : ($item['email'] ?? null),
             'website' => $item['website'] ?? $item['websiteUrl'] ?? null,
+            'instagram' => is_array($item['instagrams'] ?? null) ? ($item['instagrams'][0] ?? null) : ($item['instagram'] ?? null),
+            'linkedin' => is_array($item['linkedIns'] ?? null) ? ($item['linkedIns'][0] ?? null) : ($item['linkedin'] ?? null),
             'category' => is_array($item['categories'] ?? null) ? implode(', ', $item['categories']) : ($item['categoryName'] ?? null),
             'address' => $item['address'] ?? $item['street'] ?? null,
             'latitude' => data_get($item, 'location.lat', $item['latitude'] ?? null),
@@ -118,7 +120,15 @@ class ScraperClient
             if ($renewClaim && !$renewClaim()) return new ScraperImportOutcome($accepted, $updated, $rejected, false, true);
             $old = DB::transaction(function () use ($job, $claimToken, $external, $data) {
                 if ($claimToken && !ProspectingJob::whereKey($job->id)->where('polling_claim_token', $claimToken)->lockForUpdate()->exists()) return null;
-                $lead = Lead::firstOrCreate(['user_id' => $job->user_id, 'external_place_id' => $external], ['lead_list_id' => $job->lead_list_id, 'prospecting_job_id' => $job->id, 'name' => $data['title'] ?? '', 'phone' => $data['phone'] ?? null, 'email' => $data['emails'] ?? null, 'website' => $data['website'] ?? null, 'category' => $data['category'] ?? null, 'address' => $data['address'] ?? null, 'latitude' => is_numeric($data['latitude'] ?? null) ? $data['latitude'] : null, 'longitude' => is_numeric($data['longitude'] ?? null) ? $data['longitude'] : null, 'source' => 'apify_google_places', 'raw_data' => $data['raw_data'] ?? $data]);
+                $attributes = ['lead_list_id' => $job->lead_list_id, 'prospecting_job_id' => $job->id, 'name' => $data['title'] ?? '', 'phone' => $data['phone'] ?? null, 'email' => $data['emails'] ?? null, 'website' => $data['website'] ?? null, 'instagram'=>$data['instagram']??null, 'linkedin'=>$data['linkedin']??null, 'category' => $data['category'] ?? null, 'address' => $data['address'] ?? null, 'latitude' => is_numeric($data['latitude'] ?? null) ? $data['latitude'] : null, 'longitude' => is_numeric($data['longitude'] ?? null) ? $data['longitude'] : null, 'source' => 'apify_google_places', 'raw_data' => $data['raw_data'] ?? $data];
+                $lead = Lead::firstOrCreate(['user_id' => $job->user_id, 'external_place_id' => $external], $attributes);
+                if (!$lead->wasRecentlyCreated) {
+                    $enriched = [];
+                    foreach (['phone','email','website','instagram','linkedin','category','address'] as $field) {
+                        if (blank($lead->{$field}) && filled($attributes[$field] ?? null)) $enriched[$field] = $attributes[$field];
+                    }
+                    if ($enriched) $lead->update($enriched);
+                }
                 return !$lead->wasRecentlyCreated;
             });
             if ($old === null) return new ScraperImportOutcome($accepted, $updated, $rejected, false, true);

@@ -47,10 +47,6 @@
       <div class="kpi red"><span class="kpi-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.8 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.4"/></svg>Empresas coletadas</span><span class="kpi-value" id="kpi-places">–</span><span class="kpi-hint">somando todas as buscas</span></div>
       <div class="kpi green"><span class="kpi-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 4.5h3l1.6 4-2 1.3a10.5 10.5 0 0 0 6.4 6.4l1.3-2 4 1.6v3a1.7 1.7 0 0 1-1.8 1.7A15.5 15.5 0 0 1 3.5 6.3 1.7 1.7 0 0 1 5.2 4.5z"/></svg>Com telefone</span><span class="kpi-value" id="kpi-phone">–</span><span class="kpi-hint" id="kpi-phone-hint">&nbsp;</span></div>
       <div class="kpi yellow"><span class="kpi-label"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="m4.5 7.5 7.5 5.5 7.5-5.5"/></svg>Com e-mail</span><span class="kpi-value" id="kpi-email">–</span><span class="kpi-hint" id="kpi-email-hint">só em buscas com e-mail ligado</span></div>
-      <div class="kpi blue"><span class="kpi-label">Leads coletados</span><span class="kpi-value" id="kpi-leads">–</span><span class="kpi-hint">leads únicos na sua conta</span></div>
-      <div class="kpi red"><span class="kpi-label">Leads duplicados</span><span class="kpi-value" id="kpi-duplicates">–</span><span class="kpi-hint">descartados nas importações</span></div>
-      <div class="kpi yellow"><span class="kpi-label">Leads sem site</span><span class="kpi-value" id="kpi-without-site">–</span><span class="kpi-hint">sem website encontrado</span></div>
-      <div class="kpi green"><span class="kpi-label">WhatsApp validado</span><span class="kpi-value" id="kpi-whatsapp">–</span><span class="kpi-hint">confirmação registrada</span></div>
     </section>
 
     <div class="grid">

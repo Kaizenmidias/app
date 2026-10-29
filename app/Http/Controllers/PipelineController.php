@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Lead, PipelineOpportunity, PipelineStage};
+use App\Models\{Lead, LeadActivity, PipelineOpportunity, PipelineStage};
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -101,11 +101,13 @@ class PipelineController extends Controller
             $user = $this->lockUser($request->user()->id);
             $stage = $user->pipelineStages()->lockForUpdate()->orderBy('position')->orderBy('id')->first();
             if (!$stage) throw ValidationException::withMessages(['pipeline' => 'Crie uma etapa antes de enviar leads.']);
-            try { PipelineOpportunity::create(['user_id' => $user->id, 'lead_id' => $lead->id, 'pipeline_stage_id' => $stage->id]); }
+            $created = false;
+            try { PipelineOpportunity::create(['user_id' => $user->id, 'lead_id' => $lead->id, 'pipeline_stage_id' => $stage->id]); $created = true; }
             catch (QueryException $exception) {
                 $alreadyExists = PipelineOpportunity::query()->where('user_id', $user->id)->where('lead_id', $lead->id)->exists();
                 if (!$alreadyExists) throw $exception;
             }
+            if ($created) LeadActivity::create(['user_id'=>$user->id,'lead_id'=>$lead->id,'type'=>'pipeline','description'=>'Lead enviado para a etapa '.$stage->name.'.']);
         }, 3);
 
         return back()->with('status', 'Lead enviado para a pipeline.');
@@ -120,7 +122,7 @@ class PipelineController extends Controller
             $user = $this->lockUser($request->user()->id);
             $stage = $user->pipelineStages()->lockForUpdate()->orderBy('position')->orderBy('id')->first();
             if (!$stage) throw ValidationException::withMessages(['pipeline' => 'Crie uma etapa antes de enviar leads.']);
-            foreach ($leads as $lead) PipelineOpportunity::firstOrCreate(['user_id' => $user->id, 'lead_id' => $lead->id], ['pipeline_stage_id' => $stage->id]);
+            foreach ($leads as $lead) { $opportunity=PipelineOpportunity::firstOrCreate(['user_id' => $user->id, 'lead_id' => $lead->id], ['pipeline_stage_id' => $stage->id]); if($opportunity->wasRecentlyCreated) LeadActivity::create(['user_id'=>$user->id,'lead_id'=>$lead->id,'type'=>'pipeline','description'=>'Lead enviado para a etapa '.$stage->name.'.']); }
         }, 3);
         return back()->with('status', $leads->count().' leads enviados para a pipeline.');
     }
@@ -146,6 +148,7 @@ class PipelineController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
             $lockedOpportunity->update(['pipeline_stage_id' => $destination->id]);
+            LeadActivity::create(['user_id'=>$userId,'lead_id'=>$lockedOpportunity->lead_id,'type'=>'pipeline','description'=>'Lead movido para a etapa '.$destination->name.'.']);
         });
 
         return $request->expectsJson() ? response()->json(['ok' => true]) : back();

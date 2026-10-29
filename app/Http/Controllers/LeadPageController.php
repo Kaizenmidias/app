@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Lead, LeadList, ProspectingJob};
+use App\Models\{Lead, LeadActivity, LeadList, ProspectingJob};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -26,7 +26,7 @@ class LeadPageController extends Controller
         $perPage = in_array($request->integer('per_page'), $allowedPerPage, true) ? $request->integer('per_page') : 20;
         $listId = $request->integer('list') ?: null;
         if ($listId && !$user->leadLists()->whereKey($listId)->exists()) abort(404);
-        $query = $user->leads()->with(['job', 'list'])->latest();
+        $query = $user->leads()->with(['job', 'list', 'responsible', 'notes', 'activities', 'opportunity.stage'])->latest();
         if ($job) $query->where('prospecting_job_id', $job->id);
         if ($listId) $query->where('lead_list_id', $listId);
         if ($contact === 'email') $query->whereNotNull('email')->where('email', '<>', '');
@@ -48,6 +48,7 @@ class LeadPageController extends Controller
                 'without_site' => $job->leads()->where(fn ($builder) => $builder->whereNull('website')->orWhere('website', ''))->count(),
                 'whatsapp_validated' => $job->leads()->get(['raw_data'])->filter(fn ($lead) => (bool) data_get($lead->raw_data, 'whatsapp_validated', false))->count(),
             ] : null,
+            'assignees' => collect([$user]),
         ]);
     }
 
@@ -72,7 +73,19 @@ class LeadPageController extends Controller
     {
         $this->authorize('view', $lead);
         $data = $this->validateLead($request);
+        $tracked = ['lead_list_id','responsible_user_id','tags','name','phone','email','website','instagram','linkedin','sector','estimated_revenue','employee_count','budget_value','address'];
+        $before = $lead->only($tracked);
         $lead->update($this->leadAttributes($data, $request->user()->id, $lead->source ?: 'manual', $lead->raw_data ?? []));
+        $after = $lead->fresh()->only($tracked);
+        $changes = array_keys(array_filter($after, fn ($value, $field) => $value != $before[$field], ARRAY_FILTER_USE_BOTH));
+        if (in_array('tags', $changes, true)) $this->recordActivity($request, $lead, 'tag', 'Etiquetas atualizadas.');
+        if (in_array('responsible_user_id', $changes, true)) $this->recordActivity($request, $lead, 'responsible', filled($after['responsible_user_id']) ? 'Responsável definido.' : 'Responsável removido.');
+        if (in_array('lead_list_id', $changes, true)) $this->recordActivity($request, $lead, 'list', filled($after['lead_list_id']) ? 'Lista do lead alterada.' : 'Lead removido da lista.');
+        if (array_diff($changes, ['tags','responsible_user_id','lead_list_id'])) $this->recordActivity($request, $lead, 'updated', 'Dados do lead atualizados.');
+        if (filled($data['note'] ?? null)) {
+            $lead->notes()->create(['user_id'=>$request->user()->id,'content'=>$data['note']]);
+            $this->recordActivity($request, $lead, 'note', 'Anotação adicionada.');
+        }
         return back()->with('status', 'Lead atualizado.');
     }
 
@@ -84,7 +97,14 @@ class LeadPageController extends Controller
         ]);
         $leads = Lead::where('user_id', $request->user()->id)->whereIn('id', $data['lead_ids'])->get();
         abort_unless($leads->count() === count(array_unique($data['lead_ids'])), 403);
-        Lead::whereIn('id', $leads->pluck('id'))->update(['lead_list_id' => $data['lead_list_id'] ?? null]);
+        $targetListId = $data['lead_list_id'] ?? null;
+        DB::transaction(function () use ($leads, $targetListId, $request) {
+            foreach ($leads as $lead) {
+                if ((int) $lead->lead_list_id === (int) $targetListId) continue;
+                $lead->update(['lead_list_id' => $targetListId]);
+                $this->recordActivity($request, $lead, 'list', $targetListId ? 'Lista do lead alterada.' : 'Lead removido da lista.');
+            }
+        });
         return back()->with('status', $leads->count().' leads atualizados.');
     }
 
@@ -95,6 +115,11 @@ class LeadPageController extends Controller
             'category' => ['nullable', 'string', 'max:255'], 'address' => ['nullable', 'string', 'max:1000'],
             'phone' => ['nullable', 'string', 'max:255'], 'email' => ['nullable', 'email', 'max:255'],
             'website' => ['nullable', 'url', 'max:2048'], 'observations' => ['nullable', 'string', 'max:10000'],
+            'instagram' => ['nullable', 'url', 'max:2048'], 'linkedin' => ['nullable', 'url', 'max:2048'],
+            'sector' => ['nullable', 'string', 'max:255'], 'estimated_revenue' => ['nullable', 'numeric', 'min:0'],
+            'employee_count' => ['nullable', 'integer', 'min:0'], 'budget_value' => ['nullable', 'numeric', 'min:0'],
+            'tags_text' => ['nullable', 'string', 'max:1000'], 'responsible_user_id' => ['nullable', 'integer', Rule::in([$request->user()->id])],
+            'note' => ['nullable', 'string', 'max:10000'],
             'lead_list_id' => ['nullable', 'integer', Rule::exists('lead_lists', 'id')->where('user_id', $request->user()->id)],
         ]);
     }
@@ -103,6 +128,12 @@ class LeadPageController extends Controller
     {
         $raw['manual_company'] = $data['company'] ?? null;
         $raw['manual_observations'] = $data['observations'] ?? null;
-        return ['user_id' => $userId, 'lead_list_id' => $data['lead_list_id'] ?? null, 'name' => $data['name'], 'category' => $data['category'] ?? null, 'address' => $data['address'] ?? null, 'phone' => $data['phone'] ?? null, 'email' => $data['email'] ?? null, 'website' => $data['website'] ?? null, 'source' => $source, 'raw_data' => $raw];
+        $tags = array_values(array_unique(array_filter(array_map('trim', explode(',', (string)($data['tags_text'] ?? ''))))));
+        return ['user_id' => $userId, 'responsible_user_id'=>$data['responsible_user_id']??null, 'lead_list_id' => $data['lead_list_id'] ?? null, 'name' => $data['name'], 'category' => $data['category'] ?? null, 'sector'=>$data['sector']??null, 'estimated_revenue'=>$data['estimated_revenue']??null, 'employee_count'=>$data['employee_count']??null, 'budget_value'=>$data['budget_value']??null, 'tags'=>$tags ?: null, 'address' => $data['address'] ?? null, 'phone' => $data['phone'] ?? null, 'email' => $data['email'] ?? null, 'website' => $data['website'] ?? null, 'instagram'=>$data['instagram']??null, 'linkedin'=>$data['linkedin']??null, 'source' => $source, 'raw_data' => $raw];
+    }
+
+    private function recordActivity(Request $request, Lead $lead, string $type, string $description): void
+    {
+        LeadActivity::create(['user_id' => $request->user()->id, 'lead_id' => $lead->id, 'type' => $type, 'description' => $description]);
     }
 }

@@ -244,10 +244,6 @@
       $("#kpi-phone-hint").textContent = real.leads ? `${Math.round((real.phone / real.leads) * 100)}% dos leads` : " ";
       $("#kpi-email").textContent = fmt(real.email);
       $("#kpi-email-hint").textContent = real.leads ? `${Math.round((real.email / real.leads) * 100)}% dos leads` : " ";
-      $("#kpi-leads").textContent = fmt(real.leads);
-      $("#kpi-duplicates").textContent = fmt(real.duplicates);
-      $("#kpi-without-site").textContent = fmt(real.without_site);
-      $("#kpi-whatsapp").textContent = fmt(real.whatsapp_validated);
       const badge = $("#nav-badge"); badge.hidden = !real.busy; badge.textContent = real.busy;
       return;
     }
