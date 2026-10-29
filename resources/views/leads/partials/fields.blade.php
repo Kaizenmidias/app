@@ -17,6 +17,7 @@
     <label>Negociação<input value="{{ $lead?->opportunity?->stage?->name ?? 'Ainda não enviada à pipeline' }}" readonly></label>
     <label class="lead-field-wide">Endereço<input name="address" value="{{ old('address', $lead?->address) }}"></label>
     <label class="lead-field-wide">Etiquetas<input name="tags_text" value="{{ old('tags_text', implode(', ', $lead?->tags ?? [])) }}" placeholder="Separe as etiquetas por vírgula"></label>
+    @if($lead)<fieldset class="lead-stage-checklist lead-field-wide"><legend>Etapa do funil</legend>@php($currentStage=data_get($raw,'funnel_stage'))<label><input type="radio" name="funnel_stage" value="contacted" @checked($currentStage==='contacted')> Contato feito</label><label><input type="radio" name="funnel_stage" value="meeting" @checked($currentStage==='meeting')> Reunião agendada</label><label><input type="radio" name="funnel_stage" value="closed" @checked($currentStage==='closed')> Contrato fechado</label></fieldset>@endif
     <label class="lead-field-wide">Observações<textarea name="observations">{{ old('observations', $raw['manual_observations'] ?? '') }}</textarea></label>
     @if($lead)<label class="lead-field-wide">Nova anotação<textarea name="note" placeholder="Registre uma interação ou informação importante"></textarea></label>@endif
 </div>

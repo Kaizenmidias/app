@@ -51,6 +51,8 @@ Route::middleware(['auth','active','verified'])->group(function () {
 Route::middleware(['auth','active','verified'])->group(function () { foreach (['chats','numeros-conectados','disparar','email-marketing','automacoes','agenda','briefings'] as $module) { Route::get('/'.$module, ModulePlaceholderController::class)->defaults('module', $module)->name('module.'.$module); } });
 Route::get('/prospecting', ProspectingController::class)->middleware(['auth','active','verified','module:prospecting'])->name('prospecting');
 Route::post('/leads/lists',[LeadPageController::class,'storeList'])->middleware(['auth','active','verified','module:leads'])->name('leads.lists.store');
+Route::post('/leads/labels',[LeadPageController::class,'storeLabel'])->middleware(['auth','active','verified','module:leads'])->name('leads.labels.store');
+Route::post('/leads/apply-label',[LeadPageController::class,'applyLabel'])->middleware(['auth','active','verified','module:leads'])->name('leads.apply-label');
 Route::post('/leads/assign-list',[LeadPageController::class,'assignList'])->middleware(['auth','active','verified','module:leads'])->name('leads.assign-list');
 Route::middleware(['auth','active','verified','module:pipeline'])->group(function () { Route::patch('/pipeline/stages/{stage}',[PipelineController::class,'updateStage'])->name('pipeline.stages.update'); Route::post('/pipeline/stages/reorder',[PipelineController::class,'reorder'])->name('pipeline.stages.reorder'); Route::delete('/pipeline/stages/{stage}',[PipelineController::class,'destroyStage'])->name('pipeline.stages.destroy'); });
 Route::get('/painel', DashboardController::class)->middleware(['auth','active','verified','module:dashboard'])->name('painel');

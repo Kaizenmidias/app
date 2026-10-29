@@ -70,4 +70,5 @@ class User extends Authenticatable implements MustVerifyEmail
     public function leads() { return $this->hasMany(Lead::class); }
     public function leadLists() { return $this->hasMany(\App\Models\LeadList::class); }
     public function pipelineStages() { return $this->hasMany(PipelineStage::class); }
+    public function leadLabels() { return $this->hasMany(\App\Models\LeadLabel::class); }
 }

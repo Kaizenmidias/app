@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Lead, LeadActivity, LeadList, ProspectingJob};
+use App\Models\{Lead, LeadActivity, LeadList, LeadLabel, ProspectingJob};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -49,6 +49,7 @@ class LeadPageController extends Controller
                 'whatsapp_validated' => $job->leads()->get(['raw_data'])->filter(fn ($lead) => (bool) data_get($lead->raw_data, 'whatsapp_validated', false))->count(),
             ] : null,
             'assignees' => collect([$user]),
+            'labels' => $user->leadLabels()->orderBy('name')->get(),
         ]);
     }
 
@@ -57,6 +58,20 @@ class LeadPageController extends Controller
         $data = $request->validate(['name' => ['required', 'string', 'max:120']]);
         $request->user()->leadLists()->firstOrCreate(['name' => trim($data['name'])]);
         return back()->with('status', 'Lista criada.');
+    }
+
+    public function storeLabel(Request $request)
+    {
+        $data=$request->validate(['name'=>['required','string','max:80'],'background_color'=>['required','regex:/^#[0-9a-fA-F]{6}$/'],'text_color'=>['required','regex:/^#[0-9a-fA-F]{6}$/']]);
+        $request->user()->leadLabels()->updateOrCreate(['name'=>trim($data['name'])],['background_color'=>strtolower($data['background_color']),'text_color'=>strtolower($data['text_color'])]);
+        return back()->with('status','Etiqueta criada.');
+    }
+
+    public function applyLabel(Request $request)
+    {
+        $data=$request->validate(['lead_id'=>'required|integer','lead_label_id'=>'required|integer']);
+        $lead=$request->user()->leads()->findOrFail($data['lead_id']); $label=$request->user()->leadLabels()->findOrFail($data['lead_label_id']);
+        $tags=array_values(array_unique(array_filter(array_merge($lead->tags??[],[$label->name])))); $lead->update(['tags'=>$tags]); LeadActivity::create(['user_id'=>$request->user()->id,'lead_id'=>$lead->id,'type'=>'tag','description'=>'Etiqueta aplicada: '.$label->name]); return back()->with('status','Etiqueta aplicada.');
     }
 
     public function store(Request $request)
@@ -75,7 +90,7 @@ class LeadPageController extends Controller
         $data = $this->validateLead($request);
         $tracked = ['lead_list_id','responsible_user_id','tags','name','phone','email','website','instagram','linkedin','sector','estimated_revenue','employee_count','budget_value','address'];
         $before = $lead->only($tracked);
-        $lead->update($this->leadAttributes($data, $request->user()->id, $lead->source ?: 'manual', $lead->raw_data ?? []));
+        $raw=$lead->raw_data ?? []; $raw['funnel_stage']=$data['funnel_stage'] ?? ($raw['funnel_stage'] ?? null); $lead->update($this->leadAttributes($data, $request->user()->id, $lead->source ?: 'manual', $raw));
         $after = $lead->fresh()->only($tracked);
         $changes = array_keys(array_filter($after, fn ($value, $field) => $value != $before[$field], ARRAY_FILTER_USE_BOTH));
         if (in_array('tags', $changes, true)) $this->recordActivity($request, $lead, 'tag', 'Etiquetas atualizadas.');
@@ -118,7 +133,7 @@ class LeadPageController extends Controller
             'instagram' => ['nullable', 'url', 'max:2048'], 'linkedin' => ['nullable', 'url', 'max:2048'],
             'sector' => ['nullable', 'string', 'max:255'], 'estimated_revenue' => ['nullable', 'numeric', 'min:0'],
             'employee_count' => ['nullable', 'integer', 'min:0'], 'budget_value' => ['nullable', 'numeric', 'min:0'],
-            'tags_text' => ['nullable', 'string', 'max:1000'], 'responsible_user_id' => ['nullable', 'integer', Rule::in([$request->user()->id])],
+            'tags_text' => ['nullable', 'string', 'max:1000'], 'responsible_user_id' => ['nullable', 'integer', Rule::in([$request->user()->id])], 'funnel_stage'=>['nullable',Rule::in(['contacted','meeting','closed'])],
             'note' => ['nullable', 'string', 'max:10000'],
             'lead_list_id' => ['nullable', 'integer', Rule::exists('lead_lists', 'id')->where('user_id', $request->user()->id)],
         ]);
