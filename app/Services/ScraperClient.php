@@ -37,8 +37,7 @@ class ScraperClient
         if (!$terms) throw new RuntimeException('A busca precisa de pelo menos um termo.');
         $input = [
             'searchStringsArray' => $terms,
-            'categoryFilterWords' => $terms,
-            'locationQuery' => $job->location,
+            'locationQuery' => $params['location'] ?? null,
             'maxCrawledPlacesPerSearch' => $max,
             'language' => ($params['lang'] ?? 'pt') === 'pt' ? 'pt-BR' : ($params['lang'] ?? 'en'),
             'scrapePlaceDetailPage' => true,
@@ -48,10 +47,15 @@ class ScraperClient
             'includeWebResults' => false,
             'scrapeDirectories' => false,
         ];
+        if (blank($input['locationQuery'])) unset($input['locationQuery']);
         // The /acts/{actor}/runs endpoint receives the actor input itself.
         // Wrapping it in an `input` key makes the actor see no search fields.
         $response = $this->apify($job)->post('/acts/'.config('kaizen.apify.actor', 'compass~crawler-google-places').'/runs', $input);
-        if ($response->failed() || !$response->json('data.id') || !$response->json('data.defaultDatasetId')) throw new RuntimeException('A Apify recusou a busca.');
+        if ($response->failed()) {
+            $message = (string) $response->json('error.message', 'A Apify recusou a busca.');
+            throw new RuntimeException('A Apify recusou a busca: '.$message, $response->status());
+        }
+        if (!$response->json('data.id') || !$response->json('data.defaultDatasetId')) throw new RuntimeException('A Apify não retornou os identificadores da execução.');
         return 'apify:'.$response->json('data.id').':'.$response->json('data.defaultDatasetId');
     }
 

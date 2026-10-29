@@ -47,9 +47,22 @@ class RunScrapingJob implements ShouldQueue
             $saved = ProspectingJob::query()->whereKey($this->jobId)->where('submission_attempt_token', $attemptToken)->whereNull('scraper_job_id')->update(['scraper_job_id' => $externalId, 'submission_intent_at' => null, 'submission_attempt_token' => null, 'updated_at' => now()]);
             if ($saved !== 1) return;
         } catch (\Throwable $e) {
-            DB::transaction(function () use ($attemptToken) {
+            $definitiveRejection = $e->getCode() >= 400 && $e->getCode() < 500;
+            DB::transaction(function () use ($attemptToken, $e, $definitiveRejection) {
                 $locked = ProspectingJob::query()->whereKey($this->jobId)->where('submission_attempt_token', $attemptToken)->lockForUpdate()->first();
-                if ($locked && !$locked->scraper_job_id && !in_array($locked->status, ['ok', 'failed'], true)) $locked->update(['status' => 'unknown', 'error_message' => 'Não foi possível confirmar a criação no scraper. Reconciliação necessária.']);
+                if (!$locked || $locked->scraper_job_id || in_array($locked->status, ['ok', 'failed'], true)) return;
+                if ($locked->scraper_slot_acquired) {
+                    $capacity = DB::table('scraper_capacity')->where('id', 1)->lockForUpdate()->first();
+                    if ($capacity && $capacity->used > 0) DB::table('scraper_capacity')->where('id', 1)->update(['used' => $capacity->used - 1, 'updated_at' => now()]);
+                }
+                $locked->update([
+                    'status' => $definitiveRejection ? 'failed' : 'unknown',
+                    'error_message' => $definitiveRejection ? $e->getMessage() : 'Não foi possível confirmar a criação na Apify. Reconciliação necessária.',
+                    'scraper_slot_acquired' => false,
+                    'submission_intent_at' => null,
+                    'submission_attempt_token' => null,
+                    'finished_at' => $definitiveRejection ? now() : null,
+                ]);
             });
             Log::warning('Scraper submission outcome unknown', ['job_id' => $this->jobId, 'error' => $e->getMessage()]);
             return;

@@ -402,6 +402,7 @@
       const maxMin = +$("#maxtime").value;
       const body = {
         name: `${terms.join(", ")} · ${place.split(",")[0].trim()}`,
+        location: place,
         keywords, lang, depth, email,
         // lat/lon only bias the map viewport; the place is also in the keyword text,
         // so an un-geocodable place still works (the API just requires *some* coordinates).
