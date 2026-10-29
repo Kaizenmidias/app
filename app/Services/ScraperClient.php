@@ -41,7 +41,7 @@ class ScraperClient
             'includeWebResults' => false,
             'scrapeDirectories' => false,
         ];
-        $response = $this->apify($job)->post('/acts/'.config('kaizen.apify.actor', 'compass~crawler-google-places').'/runs', ['input' => $input]);
+        $response = $this->apify($job)->post('/acts/'.config('kaizen.apify.actor', 'compass~crawler-google-places').'/runs', $input);
         if ($response->failed() || !$response->json('data.id') || !$response->json('data.defaultDatasetId')) throw new RuntimeException('A Apify recusou a busca.');
         return 'apify:'.$response->json('data.id').':'.$response->json('data.defaultDatasetId');
     }
