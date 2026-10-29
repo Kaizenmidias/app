@@ -5,7 +5,6 @@
 @foreach([
 ['dashboard','Visão geral','dashboard'],
 ['prospecting','Prospecção','prospecting'],
-['dashboard#sec-jobs','Suas buscas','dashboard'],
 ['leads','Leads','leads'],
 ['pipeline','Pipeline','pipeline'],
 ['account.edit','Minha conta',null]

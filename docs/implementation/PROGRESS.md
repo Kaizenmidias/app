@@ -320,3 +320,10 @@ No credentials, cookies, tokens, password hashes, live payloads or personal clie
 - Added one shared eye-toggle asset pair (`public/password-toggle.js` and `public/password-toggle.css`) and integrated it into login, registration, password reset, Minha conta, and administrative user forms.
 - Controls preserve password/token field names and backend validation; they only switch the local input type, maintain focus, and expose `aria-label`/`aria-pressed` state. No password or token is rendered or logged.
 - Local validation: `PasswordToggleTest`, `AuthenticationTest`, `AccountAndManualLeadTest` and `AdminManagementTest` passed 15 tests/66 assertions; Blade compilation, JavaScript syntax and `git diff --check` passed. Production smoke confirmed both assets HTTP 200 and private routes remain protected.
+
+### Dashboard overview and prospecting history removal (2026-10-29)
+
+- Dashboard now uses a dedicated authenticated overview with period filters and real counts for leads, contact activities, meetings and closures; the legacy “Nova busca” and “Suas buscas” sections are no longer rendered on `/dashboard`.
+- The shared sidebar no longer exposes “Suas buscas”. Prospecting keeps its internal job state hidden so result polling continues without presenting search history, and completed results include an “Ir para Leads” action.
+- Administrative user forms now accept an optional profile photo upload using the existing private storage path; no schema change was required.
+- Directed validation: DashboardShellTest, ProfilePhotoTest and the functional AdminManagement tests passed except for the pre-existing admin view encoding assertion; Blade cache and PHP syntax passed. Authenticated browser validation and production deployment remain required.

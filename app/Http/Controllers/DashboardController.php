@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LeadActivity;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -9,6 +12,18 @@ class DashboardController extends Controller
     public function __invoke(Request $request)
     {
         $user = $request->user();
+        if ($request->routeIs('dashboard')) {
+            $period = in_array($request->query('period'), ['yesterday','today','7d','30d','year'], true) ? $request->query('period') : '30d';
+            $end = Carbon::today()->endOfDay();
+            $start = match ($period) { 'yesterday'=>Carbon::yesterday()->startOfDay(), 'today'=>Carbon::today()->startOfDay(), '7d'=>Carbon::today()->subDays(6)->startOfDay(), 'year'=>Carbon::today()->startOfYear(), default=>Carbon::today()->subDays(29)->startOfDay() };
+            $leads = $user->leads()->whereBetween('created_at', [$start,$end])->count();
+            $activity = LeadActivity::where('user_id',$user->id)->whereBetween('created_at',[$start,$end])->get(['type','created_at']);
+            $contacts = $activity->whereIn('type',['contact','call','message','whatsapp','email'])->count();
+            $meetings = $activity->whereIn('type',['meeting','appointment','meeting_scheduled'])->count();
+            $closures = $activity->whereIn('type',['closed','won','conversion'])->count();
+            $series = collect(CarbonPeriod::create($start->copy()->startOfDay(),'1 day',$end->copy()->startOfDay()))->map(function(Carbon $day) use ($user,$activity){$date=$day->toDateString();$count=function(array $types)use($activity,$date){return $activity->whereIn('type',$types)->filter(fn($a)=>$a->created_at->toDateString()===$date)->count();};return ['date'=>$date,'leads'=>$user->leads()->whereDate('created_at',$date)->count(),'contacts'=>$count(['contact','call','message','whatsapp','email']),'meetings'=>$count(['meeting','appointment','meeting_scheduled']),'closures'=>$count(['closed','won','conversion'])];})->values();
+            return response()->view('dashboard.index', compact('period','start','end','leads','contacts','meetings','closures','series'));
+        }
         $jobs = $user->prospectingJobs()->get(['status', 'search_parameters']);
         $leads = $user->leads()->get(['phone', 'email', 'website', 'raw_data']);
         $stats = [

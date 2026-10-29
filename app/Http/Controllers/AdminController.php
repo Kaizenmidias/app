@@ -72,6 +72,9 @@ class AdminController extends Controller
                 'module_access' => $data['role'] === 'admin' ? null : $this->moduleAccess($data),
             ]);
             $user->forceFill(['email_verified_at' => now()])->save();
+            if ($request->hasFile('profile_photo')) {
+                $user->forceFill(['profile_photo_path' => $request->file('profile_photo')->storeAs('profile-photos/'.$user->id, str()->uuid().'.'.$request->file('profile_photo')->extension(), 'local')])->save();
+            }
 
             $this->audit($request, 'user.created', $user, [
                 'role' => $user->role,
@@ -116,6 +119,11 @@ class AdminController extends Controller
             if (! empty($data['password'])) {
                 $attributes['password'] = Hash::make($data['password']);
                 $attributes['remember_token'] = str()->random(60);
+            }
+            if ($request->hasFile('profile_photo')) {
+                $oldPhoto = $locked->profile_photo_path;
+                $attributes['profile_photo_path'] = $request->file('profile_photo')->storeAs('profile-photos/'.$locked->id, str()->uuid().'.'.$request->file('profile_photo')->extension(), 'local');
+                if ($oldPhoto) Storage::disk('local')->delete($oldPhoto);
             }
 
             $locked->forceFill($attributes)->save();
@@ -191,6 +199,7 @@ class AdminController extends Controller
             'module_access' => ['nullable', 'array'],
             'module_access.*' => [Rule::in(self::MODULES)],
             'password' => [$creating ? 'required' : 'nullable', 'confirmed', PasswordRule::min(12)],
+            'profile_photo' => ['nullable','file','image','mimes:jpeg,jpg,png,webp','max:2048'],
         ]);
     }
 
