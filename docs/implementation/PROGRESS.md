@@ -327,3 +327,10 @@ No credentials, cookies, tokens, password hashes, live payloads or personal clie
 - The shared sidebar no longer exposes “Suas buscas”. Prospecting keeps its internal job state hidden so result polling continues without presenting search history, and completed results include an “Ir para Leads” action.
 - Administrative user forms now accept an optional profile photo upload using the existing private storage path; no schema change was required.
 - Directed validation: DashboardShellTest, ProfilePhotoTest and the functional AdminManagement tests passed except for the pre-existing admin view encoding assertion; Blade cache and PHP syntax passed. Authenticated browser validation and production deployment remain required.
+
+### Lead funnel checklist and colored labels (2026-10-29)
+
+- Added per-lead funnel checklist (Contato feito, Reuni�o agendada, Contrato fechado) in lead modals and persisted it in lead metadata with ownership enforced by the existing update flow.
+- Added user-owned labels with configurable background/text colors, creation dialog, and contextual application action from each lead row.
+- Migration 2026_10_29_000010_create_lead_labels.php applied in production release ed0c30a.
+
