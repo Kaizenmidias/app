@@ -60,4 +60,26 @@ class ProfilePhotoTest extends TestCase
             ->assertSee('id="profile-photo-input"', false)
             ->assertSee('id="save-photo-button" type="submit" class="button button-primary" hidden', false);
     }
+
+    public function test_administrator_can_assign_photo_to_managed_user(): void
+    {
+        Storage::fake('local');
+        $admin = User::factory()->create(['role' => 'admin', 'email_verified_at' => now()]);
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $this->actingAs($admin)->put('/admin/users/'.$user->id, [
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => 'partner',
+            'status' => 'active',
+            'module_access' => ['dashboard'],
+            'password' => '',
+            'password_confirmation' => '',
+            'profile_photo' => $this->png('managed.png'),
+        ])->assertRedirect('/admin/users');
+
+        $path = $user->refresh()->profile_photo_path;
+        $this->assertNotEmpty($path);
+        Storage::disk('local')->assertExists($path);
+    }
 }

@@ -18,6 +18,18 @@
 <div class="account-help-modal" id="apify-help-modal" hidden role="dialog" aria-modal="true" aria-labelledby="apify-help-title"><div class="account-help-dialog"><button type="button" class="account-help-close" id="apify-help-close" aria-label="Fechar ajuda">×</button><p class="module-eyebrow">Ajuda passo a passo</p><h2 id="apify-help-title">Como encontrar sua API da Apify</h2><p>Você só precisa fazer isso uma vez. A chave é como uma senha: não compartilhe com ninguém.</p><ol><li><strong>Abra a Apify:</strong> entre em <a href="https://apify.com" target="_blank" rel="noopener noreferrer">apify.com</a> e clique em <strong>Sign up</strong> para criar sua conta, ou em <strong>Log in</strong> se já tiver uma.</li><li><strong>Confirme seu e-mail:</strong> abra a mensagem enviada pela Apify e clique no botão de confirmação. Depois, volte para o site.</li><li><strong>Abra as configurações:</strong> clique na sua foto ou no seu nome, no canto superior direito, e escolha <strong>Settings</strong>.</li><li><strong>Entre em API &amp; Integrations:</strong> no menu de configurações, clique em <strong>API &amp; Integrations</strong> ou abra diretamente <a href="https://console.apify.com/account/integrations" target="_blank" rel="noopener noreferrer">esta página de integrações</a>.</li><li><strong>Crie um token:</strong> encontre <strong>Personal API tokens</strong>, clique em <strong>+ Create new token</strong>, dê um nome como <em>Parceiros Kaizen</em> e confirme.</li><li><strong>Copie o token:</strong> clique em <strong>Copy</strong>. Ele é uma sequência grande de letras e números. Não coloque espaços antes ou depois.</li><li><strong>Volte para cá:</strong> cole o token no campo <strong>Token da API Apify</strong> e clique em <strong>Salvar alterações</strong>. Pronto: as próximas buscas usarão o saldo da sua conta Apify.</li></ol><div class="account-help-note"><strong>Segurança:</strong> nunca envie esse token por WhatsApp, e-mail ou para outra pessoa. Se achar que alguém viu o token, apague-o na Apify e crie outro.</div><div class="account-help-actions"><a class="button button-secondary" href="https://console.apify.com/account/integrations" target="_blank" rel="noopener noreferrer">Abrir integrações da Apify</a><button type="button" class="button button-primary" id="apify-help-done">Entendi</button></div></div></div>
 @push('scripts')<script>
 document.addEventListener('DOMContentLoaded', function () {
+    const photoInput = document.getElementById('profile-photo-input');
+    const savePhoto = document.getElementById('save-photo-button');
+    const preview = document.getElementById('profile-photo-preview');
+    const fallback = document.getElementById('profile-photo-fallback');
+    if (photoInput && savePhoto) photoInput.addEventListener('change', function () {
+        const file = photoInput.files && photoInput.files[0];
+        savePhoto.hidden = !file;
+        if (!file || !preview) return;
+        preview.src = URL.createObjectURL(file);
+        preview.hidden = false;
+        if (fallback) fallback.hidden = true;
+    });
     const token = document.getElementById('apify-api-token');
     if (!token) return;
     const mask = '••••••••••••';
