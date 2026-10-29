@@ -13,7 +13,7 @@ class PipelineController extends Controller
     public function index(Request $request)
     {
         $stages = $request->user()->pipelineStages()
-            ->with('opportunities.lead')
+            ->with(['opportunities.lead.responsible', 'opportunities.lead.notes', 'opportunities.lead.activities'])
             ->orderBy('position')
             ->get();
 

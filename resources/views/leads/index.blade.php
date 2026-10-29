@@ -43,7 +43,7 @@
         @else
             <div class="lead-table-wrap">
                 <table class="lead-table">
-                    <thead><tr><th><input type="checkbox" id="select-all" aria-label="Selecionar todos"></th><th>Nome</th><th><span class="email-heading">E-mail <button type="button" id="copy-emails" title="Copiar e-mails exibidos ou selecionados" aria-label="Copiar e-mails">⧉</button></span></th><th>WhatsApp</th><th>Site</th><th>Instagram</th><th>Endereço</th><th>Lista</th><th>Capturado em</th><th><span class="sr-only">Ações</span></th></tr></thead>
+                    <thead><tr><th><input type="checkbox" id="select-all" aria-label="Selecionar todos"></th><th>Nome</th><th><span class="email-heading">E-mail <button type="button" id="copy-emails" title="Copiar e-mails exibidos ou selecionados" aria-label="Copiar e-mails">⧉</button></span></th><th>WhatsApp</th><th>Site</th><th>Instagram</th><th>Lista</th><th>Capturado em</th><th><span class="sr-only">Ações</span></th></tr></thead>
                     <tbody>
                     @foreach($leads as $lead)
                         <tr class="lead-row" data-dialog-open="lead-{{ $lead->id }}" tabindex="0">
@@ -55,7 +55,6 @@
                             <td>@if(strlen($whatsappDigits) >= 12 && strlen($whatsappDigits) <= 13)<a class="lead-whatsapp" href="https://wa.me/{{ $whatsappDigits }}" target="_blank" rel="noopener">{{ $lead->phone }}</a>@else {{ $lead->phone ?: 'Não informado' }} @endif</td>
                             <td>@if($lead->website)<a href="{{ $lead->website }}" target="_blank" rel="noopener">Abrir site</a>@else Não informado @endif</td>
                             <td>@if($lead->instagram)<a href="{{ $lead->instagram }}" target="_blank" rel="noopener">Abrir Instagram</a>@else Não informado @endif</td>
-                            <td>{{ $lead->address ?: 'Não informado' }}</td>
                             <td>{{ $lead->list?->name ?: 'Sem lista' }}</td>
                             <td>{{ optional($lead->created_at)->format('d/m/Y H:i') }}</td>
                             <td class="lead-actions-cell"><details class="lead-menu"><summary aria-label="Ações do lead">•••</summary><div><button type="button" data-dialog-open="lead-{{ $lead->id }}">Ver e editar</button><form method="post" action="{{ route('pipeline.send', $lead) }}">@csrf<button type="submit">Enviar para a pipeline</button></form></div></details></td>
@@ -64,7 +63,7 @@
                     </tbody>
                 </table>
             </div>
-            <nav class="leads-pagination" aria-label="Paginação dos leads">{{ $leads->links() }}</nav>
+            <nav class="leads-pagination" aria-label="Paginação dos leads">{{ $leads->links('pagination.kaizen') }}</nav>
         @endif
     </section>
 </div>

@@ -72,4 +72,14 @@ class PipelineTest extends TestCase
 
     public function test_blank_stage_name_is_rejected(): void { $u = $this->user(); $this->actingAs($u)->post('/pipeline/stages', ['name' => '   '])->assertSessionHasErrors('name'); $this->assertDatabaseCount('pipeline_stages', 0); }
     public function test_pipeline_page_uses_shared_shell_and_stage_actions(): void { $u = $this->user(); $this->actingAs($u)->post('/pipeline/stages', ['name' => 'Novo']); $response = $this->actingAs($u)->get('/pipeline'); $response->assertOk()->assertSee('scraper-shell-sidebar')->assertSee('stage-menu')->assertSee('Nova etapa')->assertSee('pipeline.css'); }
+    public function test_pipeline_cards_show_budgets_and_open_lead_details_without_provider_or_move_select(): void
+    {
+        $u = $this->user();
+        $this->actingAs($u)->post('/pipeline/stages', ['name' => 'Proposta']);
+        $stage = $u->pipelineStages()->first();
+        $lead = Lead::create(['user_id'=>$u->id,'name'=>'Empresa Orçamento','source'=>'apify_google_places','budget_value'=>'2500.00','sector'=>'Serviços','address'=>'Rua Central']);
+        PipelineOpportunity::create(['user_id'=>$u->id,'lead_id'=>$lead->id,'pipeline_stage_id'=>$stage->id]);
+        $response = $this->actingAs($u)->get('/pipeline');
+        $response->assertOk()->assertSee('R$ 2.500,00')->assertSee('lead-dialog-'.$lead->id)->assertSee('Informações do lead')->assertSee('Rua Central')->assertDontSee('apify_google_places')->assertDontSee('pipeline-move-select')->assertDontSee('pipeline-select');
+    }
 }

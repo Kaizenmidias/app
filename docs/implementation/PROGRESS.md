@@ -292,3 +292,11 @@ No credentials, cookies, tokens, password hashes, live payloads or personal clie
 - The latest listed artifact was a vhost configuration snapshot, not a database backup. Database integrity and recoverability are therefore unverified.
 - Added `release-backup-readiness.md` with the evidence, isolated MySQL 8.4 restore plan, risks and stop criteria. The existing `kaizen-mysql-test` environment is explicitly excluded as a restore target.
 - No backup, restore, container, volume, permission, migration, service or production change was performed.
+
+### Leads pagination and Pipeline presentation refinement (2026-10-29)
+
+- Approved scope: translate the Leads paginator, remove the address column from the table while retaining it in lead details, remove provider/source labels from the Pipeline, open lead details from a card click, keep stage movement drag-only, and display per-card and per-stage budget totals.
+- Changed runtime files: `app/Http/Controllers/PipelineController.php`, `resources/views/leads/index.blade.php`, `resources/views/pagination/kaizen.blade.php`, `resources/views/pipeline/index.blade.php`, `public/leads.css`, `public/pipeline.css`, and `public/pipeline.js`.
+- Security and ownership are unchanged: the Pipeline still loads only stages and opportunities owned through the authenticated user, and move requests retain the existing authorization and same-user destination checks.
+- Local validation: `LeadsPageTest` passed 7 tests/30 assertions; `PipelineTest` passed 9 tests/34 assertions; JavaScript syntax, Blade compilation and `git diff --check` passed. Static inspection found Apify references only in `resources/views/account/edit.blade.php`.
+- No migration or database change is required. Browser-authenticated visual and drag interaction validation remains an operational smoke-test limitation until a suitable authorized session is available.
