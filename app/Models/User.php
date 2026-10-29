@@ -22,6 +22,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'profile_photo_path',
+        'apify_api_token',
         'password',
         'role',
         'status',
@@ -49,6 +50,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_login_at' => 'datetime',
+            'apify_api_token' => 'encrypted',
         ];
     }
 
