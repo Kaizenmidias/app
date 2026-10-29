@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('auth/login.css') }}">
+    <link rel="stylesheet" href="{{ asset('password-toggle.css') }}?v={{ filemtime(public_path('password-toggle.css')) }}">
 </head>
 <body class="auth-page">
     <main class="auth-shell">
@@ -20,5 +21,6 @@
             @yield('content')
         </section>
     </main>
+    <script src="{{ asset('password-toggle.js') }}?v={{ filemtime(public_path('password-toggle.js')) }}"></script>
 </body>
 </html>

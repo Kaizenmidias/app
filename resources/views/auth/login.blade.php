@@ -16,7 +16,7 @@
 <div class="auth-field">
 <label class="auth-sr-only" for="password">Senha</label>
 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4M12 14v3"/></svg>
-<input id="password" name="password" type="password" placeholder="Senha" autocomplete="current-password" required>
+<div class="password-field"><input id="password" name="password" type="password" placeholder="Senha" autocomplete="current-password" required><button class="password-toggle" type="button" data-password-toggle aria-controls="password" aria-label="Mostrar senha" aria-pressed="false"></button></div>
 </div>
 <label class="auth-remember"><input type="checkbox" name="remember"> Lembrar-me</label>
 <button class="auth-button" type="submit">Entrar <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18m-8-8 8 8-8 8"/></svg></button>
