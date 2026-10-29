@@ -306,3 +306,11 @@ No credentials, cookies, tokens, password hashes, live payloads or personal clie
 - Approved scope: reduce Pipeline column/card width and retain only the lead name, budget and structured city/state on each card; the complete lead information remains in the click-opened modal.
 - City/state are read from structured scraper data (`city`/`cityName` and `stateCode`/`state`). Missing structured location is shown as `Localização não informada`; no address parsing or inferred location was introduced.
 - Local validation: `PipelineTest` passed 9 tests/36 assertions; JavaScript syntax, Blade compilation and `git diff --check` passed. No migration or backend behavior change is required.
+
+### Administrative roles and user access management (2026-10-29)
+
+- Approved scope: separate administrators from ordinary users, promote `agenciakaizendesign@gmail.com`, add administrative user management, and allow per-user access to Dashboard, Prospecção, Leads and Pipeline.
+- The existing `admin`/`partner` role boundary was preserved for compatibility and is presented as `Administrador`/`Usuário`. A new nullable `users.module_access` JSON column preserves full current access for existing users; restrictions are enforced by route middleware and reflected in the shared sidebar.
+- The `/admin` area now uses the shared Design System and provides overview metrics plus a searchable, filterable user table. Clicking a user opens a modal with private profile photo, identity, role, status, module access, verification/login metadata, optional secure password replacement and account controls. Password hashes are never rendered.
+- Administrative mutations remain CSRF-protected, generate audit records, revoke sessions after blocking/password replacement, and prevent removal or blocking of the final active administrator. The exact designated account promotion is performed by migration `2026_10_29_000009_add_module_access_and_promote_primary_admin.php`.
+- Local isolated validation: 38 targeted feature tests passed with 172 assertions, including 5 new administrative tests/30 assertions; PHP syntax, Blade compilation and `git diff --check` passed. Production migration and authenticated browser validation remain operational steps.

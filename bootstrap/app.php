@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([__DIR__.'/../app/Console/Commands'])
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->alias(['active' => \App\Http\Middleware\EnsureActiveUser::class, 'admin' => \App\Http\Middleware\EnsureAdmin::class, 'frontend.csrf' => \App\Http\Middleware\EnsureFrontendCsrf::class]);
+        $middleware->alias(['active' => \App\Http\Middleware\EnsureActiveUser::class, 'admin' => \App\Http\Middleware\EnsureAdmin::class, 'module' => \App\Http\Middleware\EnsureModuleAccess::class, 'frontend.csrf' => \App\Http\Middleware\EnsureFrontendCsrf::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

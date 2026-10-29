@@ -26,6 +26,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'role',
         'status',
+        'module_access',
         'last_login_at',
     ];
 
@@ -51,11 +52,20 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'last_login_at' => 'datetime',
             'apify_api_token' => 'encrypted',
+            'module_access' => 'array',
         ];
     }
 
     public function isAdmin(): bool { return $this->role === 'admin'; }
     public function isActive(): bool { return $this->status === 'active'; }
+    public function canAccessModule(string $module): bool
+    {
+        if ($this->isAdmin()) return true;
+
+        $access = $this->module_access;
+
+        return $access === null || in_array($module, $access, true);
+    }
     public function prospectingJobs() { return $this->hasMany(ProspectingJob::class); }
     public function leads() { return $this->hasMany(Lead::class); }
     public function leadLists() { return $this->hasMany(\App\Models\LeadList::class); }

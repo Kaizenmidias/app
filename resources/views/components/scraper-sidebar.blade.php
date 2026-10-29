@@ -3,11 +3,22 @@
 <div class="scraper-shell-profile">@if($user?->profile_photo_path)<img class="scraper-shell-profile-image" src="{{ route('account.photo') }}" alt="Foto de {{ $user->name }}" width="42" height="42">@else<span class="scraper-shell-profile-avatar" aria-label="Avatar de {{ $user?->name ?: 'Parceiro' }}">{{ mb_strtoupper(mb_substr($firstName, 0, 1)) }}</span>@endif<span><strong>Bem-vindo, {{ $firstName }}</strong><small>Parceiros Kaizen</small></span></div>
 <nav class="scraper-shell-nav">
 @foreach([
-['dashboard','Visão geral'],['prospecting','Prospecção'],['dashboard#sec-jobs','Suas buscas'],['leads','Leads'],['pipeline','Pipeline'],['account.edit','Minha conta']
-] as [$target,$label])
+['dashboard','Visão geral','dashboard'],
+['prospecting','Prospecção','prospecting'],
+['dashboard#sec-jobs','Suas buscas','dashboard'],
+['leads','Leads','leads'],
+['pipeline','Pipeline','pipeline'],
+['account.edit','Minha conta',null]
+] as [$target,$label,$module])
+@continue($module && !$user->canAccessModule($module))
 @php($href=str_contains($target,'#')?route('dashboard').'#sec-jobs':route($target))
 <a href="{{ $href }}" @class(['is-active'=>request()->routeIs($target)||($target==='prospecting'&&request()->routeIs('prospecting'))])><span>{{ $label }}</span></a>
 @endforeach
+@if($user?->isAdmin())
+<div class="scraper-shell-nav-section">Administração</div>
+<a href="{{ route('admin.dashboard') }}" @class(['is-active'=>request()->routeIs('admin.dashboard')])><span>Visão administrativa</span></a>
+<a href="{{ route('admin.users') }}" @class(['is-active'=>request()->routeIs('admin.users*')])><span>Usuários</span></a>
+@endif
 </nav>
 <div class="scraper-shell-footer"><div class="scraper-shell-brand"><img class="scraper-shell-kaizen-logo" src="{{ asset('auth/logo-kaizen.png') }}" alt="Kaizen Mídias" width="34" height="34"><strong>Kaizen Mídias</strong></div><span class="scraper-shell-account">{{ auth()->user()->email }}</span><form method="post" action="{{ route('logout') }}">@csrf<button type="submit" class="scraper-shell-logout">Sair</button></form></div></aside><script>
 (() => { const sidebar=document.getElementById('scraper-sidebar'), button=document.querySelector('.scraper-shell-menu-button'), backdrop=document.querySelector('.scraper-shell-menu-backdrop'); if(!sidebar||!button||!backdrop||button.dataset.menuReady)return; button.dataset.menuReady='true'; const close=()=>{sidebar.classList.remove('is-open');backdrop.hidden=true;button.setAttribute('aria-expanded','false');document.body.classList.remove('menu-open');button.focus();}; const open=()=>{backdrop.hidden=false;sidebar.classList.add('is-open');button.setAttribute('aria-expanded','true');document.body.classList.add('menu-open');sidebar.querySelector('a')?.focus();}; button.addEventListener('click',()=>sidebar.classList.contains('is-open')?close():open()); backdrop.addEventListener('click',close); document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sidebar.classList.contains('is-open'))close();}); sidebar.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{if(window.matchMedia('(max-width: 900px)').matches)close();})); })();
