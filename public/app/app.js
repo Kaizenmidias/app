@@ -321,7 +321,7 @@
   }
   $("#radius").addEventListener("input", () => syncRadius(true));
 
-  $("#email-chip").addEventListener("click", () => {
+  $("#email-chip")?.addEventListener("click", () => {
     state.email = !state.email;
     $("#email-chip").setAttribute("aria-pressed", state.email);
     $("#email-note").hidden = !state.email;
@@ -389,7 +389,7 @@
     if (!terms.length) { $("#keyword").focus(); return showError("Diga o que você procura. Ex.: dentista."); }
     if (!place) { $("#location").focus(); return showError("Diga onde procurar. Ex.: Barra Funda, São Paulo."); }
 
-    const lang = $("#lang").value, depth = state.depth, email = state.email;
+    const lang = $("#lang").value, depth = state.depth, email = true;
     const keywords = terms.map((t) => `${t} ${JOINER[lang] || "em"} ${place}`);
     const dup = state.jobs.find((j) => (j.status === "pending" || j.status === "working") && j.keywords.join("|") === keywords.join("|"));
     if (dup && !confirm("Essa mesma busca já está rodando ou na fila. Criar outra igual mesmo assim?")) return;
