@@ -29,8 +29,15 @@ class ScraperClient
         }
         $params = $job->search_parameters ?? [];
         $max = (int) ($params['max_results'] ?? match ((int) ($params['depth'] ?? 5)) { 1 => 20, 4 => 50, 8 => 100, default => 50 });
+        $terms = array_values(array_filter(array_map('strval', (array) $job->keywords), fn ($value) => trim($value) !== ''));
+        if (!$terms) {
+            $terms = array_values(array_filter(array_map('strval', (array) data_get($params, 'keywords', [])), fn ($value) => trim($value) !== ''));
+        }
+        if (!$terms && filled($job->location)) $terms = [(string) $job->location];
+        if (!$terms) throw new RuntimeException('A busca precisa de pelo menos um termo.');
         $input = [
-            'searchStringsArray' => array_values($job->keywords),
+            'searchStringsArray' => $terms,
+            'categoryFilterWords' => $terms,
             'locationQuery' => $job->location,
             'maxCrawledPlacesPerSearch' => $max,
             'language' => ($params['lang'] ?? 'pt') === 'pt' ? 'pt-BR' : ($params['lang'] ?? 'en'),
