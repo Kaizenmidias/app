@@ -211,7 +211,7 @@
       for (const j of state.jobs) {
         const prev = state.prevStatus[j.id];
         if (j.status === "ok" && state.counts[j.id] == null) fetchCount(j);
-        if (prev && prev !== j.status && j.status === "ok") notifyDone(j);
+        if (prev && prev !== j.status && j.status === "ok") { notifyDone(j); redirectToCompletedJob(j); }
         if (prev && prev !== j.status && j.status === "failed") toast(`A busca “${j.name}” falhou.`);
         state.prevStatus[j.id] = j.status;
       }
@@ -247,6 +247,10 @@
   async function notifyDone(j) {
     try { toast(`“${j.name}” terminou: ${(await fetchRows(j.id)).length} resultados`, 6000); }
     catch { toast(`“${j.name}” terminou`); }
+  }
+
+  function redirectToCompletedJob(j) {
+    window.location.assign(`/leads/resultado/${encodeURIComponent(j.id)}`);
   }
 
   function renderJobs() {
@@ -403,7 +407,7 @@
       const body = {
         name: `${terms.join(", ")} · ${place.split(",")[0].trim()}`,
         location: place,
-        keywords, lang, depth, email,
+        keywords, search_terms: terms, lang, depth, email,
         // lat/lon only bias the map viewport; the place is also in the keyword text,
         // so an un-geocodable place still works (the API just requires *some* coordinates).
         lat: g ? g.lat : "0", lon: g ? g.lon : "0",

@@ -111,6 +111,20 @@ class PipelineController extends Controller
         return back()->with('status', 'Lead enviado para a pipeline.');
     }
 
+    public function sendMany(Request $request)
+    {
+        $ids = $request->validate(['lead_ids' => ['required', 'array', 'min:1'], 'lead_ids.*' => ['integer']])['lead_ids'];
+        $leads = Lead::query()->where('user_id', $request->user()->id)->whereIn('id', $ids)->get();
+        abort_unless($leads->count() === count(array_unique($ids)), 403);
+        DB::transaction(function () use ($request, $leads) {
+            $user = $this->lockUser($request->user()->id);
+            $stage = $user->pipelineStages()->lockForUpdate()->orderBy('position')->orderBy('id')->first();
+            if (!$stage) throw ValidationException::withMessages(['pipeline' => 'Crie uma etapa antes de enviar leads.']);
+            foreach ($leads as $lead) PipelineOpportunity::firstOrCreate(['user_id' => $user->id, 'lead_id' => $lead->id], ['pipeline_stage_id' => $stage->id]);
+        }, 3);
+        return back()->with('status', $leads->count().' leads enviados para a pipeline.');
+    }
+
     public function move(Request $request, PipelineOpportunity $opportunity)
     {
         $this->authorize('update', $opportunity);
