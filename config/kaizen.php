@@ -13,4 +13,10 @@ return [
    'import_max_bytes' => (int) env('SCRAPER_IMPORT_MAX_BYTES', 25 * 1024 * 1024),
    'import_max_rows' => (int) env('SCRAPER_IMPORT_MAX_ROWS', 10000),
     ],
+    'apify' => [
+        'base_url' => rtrim(env('APIFY_BASE_URL', 'https://api.apify.com/v2'), '/'),
+        'actor' => env('APIFY_ACTOR', 'compass~crawler-google-places'),
+        'timeout' => (int) env('APIFY_TIMEOUT', 90),
+        'concurrency' => (int) env('APIFY_CONCURRENCY', 4),
+    ],
 ];

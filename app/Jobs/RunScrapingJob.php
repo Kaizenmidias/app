@@ -27,7 +27,8 @@ class RunScrapingJob implements ShouldQueue
         $claimed = DB::transaction(function () use ($attemptToken) {
             $current = ProspectingJob::query()->whereKey($this->jobId)->lockForUpdate()->first();
             $capacity = DB::table('scraper_capacity')->where('id', 1)->lockForUpdate()->first();
-            if (!$current || !$capacity || $current->scraper_job_id || in_array($current->status, ['ok', 'failed'], true) || $current->scraper_slot_acquired || $capacity->used >= $capacity->capacity) return false;
+            $limit = max(1, (int) config('kaizen.apify.concurrency', 4));
+            if (!$current || !$capacity || $current->scraper_job_id || in_array($current->status, ['ok', 'failed'], true) || $current->scraper_slot_acquired || $capacity->used >= $limit) return false;
             DB::table('scraper_capacity')->where('id', 1)->update(['used' => $capacity->used + 1, 'updated_at' => now()]);
             $current->update(['scraper_slot_acquired' => true, 'status' => 'working', 'started_at' => $current->started_at ?: now(), 'progress' => 1, 'submission_intent_at' => now(), 'submission_attempt_token' => $attemptToken]);
             return true;
