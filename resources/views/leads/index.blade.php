@@ -1,4 +1,4 @@
-﻿@extends('layouts.scraper-shell')
+@extends('layouts.scraper-shell')
 
 @section('title', 'Leads Â· Parceiros Kaizen')
 
@@ -75,7 +75,7 @@
 
 <dialog id="label-{{ $lead->id }}" class="lead-modal"><form method="post" action="{{ route('leads.apply-label') }}" class="lead-form">@csrf<input type="hidden" name="lead_id" value="{{ $lead->id }}"><button type="button" class="lead-modal-close" data-dialog-close>×</button><h2>Etiquetas</h2><label>Aplicar etiqueta<select name="lead_label_id" required>@foreach($labels as $label)<option value="{{ $label->id }}">{{ $label->name }}</option>@endforeach</select></label><button type="submit" class="lead-button lead-button-primary">Aplicar</button></form></dialog>
 @foreach($leads as $lead)
-<dialog id="lead-{{ $lead->id }}" class="lead-modal lead-detail-modal"><form method="post" action="{{ route('leads.update', $lead) }}" class="lead-form">@csrf @method('PUT')<button type="button" class="lead-modal-close" data-dialog-close aria-label="Fechar">Ã—</button><p class="module-eyebrow">Lead #{{ $lead->id }}</p><h2>{{ $lead->name }}</h2><p class="lead-captured">Capturado em {{ optional($lead->created_at)->format('d/m/Y H:i') }}</p>@include('leads.partials.fields', ['lead' => $lead])<div class="lead-modal-actions"><button type="button" class="lead-button lead-button-secondary" data-dialog-close>Cancelar</button><button type="submit" class="lead-button lead-button-primary">Salvar alteraÃ§Ãµes</button></div></form></dialog>
+<dialog id="label-{{ $lead->id }}" class="lead-modal"><form method="post" action="{{ route('leads.apply-label') }}" class="lead-form">@csrf<input type="hidden" name="lead_id" value="{{ $lead->id }}"><button type="button" class="lead-modal-close" data-dialog-close>×</button><h2>Etiquetas</h2><label>Aplicar etiqueta<select name="lead_label_id" required>@foreach($labels as $label)<option value="{{ $label->id }}">{{ $label->name }}</option>@endforeach</select></label><button type="submit" class="lead-button lead-button-primary">Aplicar</button></form></dialog>`r`n<dialog id="lead-{{ $lead->id }}" class="lead-modal lead-detail-modal"><form method="post" action="{{ route('leads.update', $lead) }}" class="lead-form">@csrf @method('PUT')<button type="button" class="lead-modal-close" data-dialog-close aria-label="Fechar">Ã—</button><p class="module-eyebrow">Lead #{{ $lead->id }}</p><h2>{{ $lead->name }}</h2><p class="lead-captured">Capturado em {{ optional($lead->created_at)->format('d/m/Y H:i') }}</p>@include('leads.partials.fields', ['lead' => $lead])<div class="lead-modal-actions"><button type="button" class="lead-button lead-button-secondary" data-dialog-close>Cancelar</button><button type="submit" class="lead-button lead-button-primary">Salvar alteraÃ§Ãµes</button></div></form></dialog>
 @endforeach
 @endsection
 
