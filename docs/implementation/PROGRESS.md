@@ -314,3 +314,9 @@ No credentials, cookies, tokens, password hashes, live payloads or personal clie
 - The `/admin` area now uses the shared Design System and provides overview metrics plus a searchable, filterable user table. Clicking a user opens a modal with private profile photo, identity, role, status, module access, verification/login metadata, optional secure password replacement and account controls. Password hashes are never rendered.
 - Administrative mutations remain CSRF-protected, generate audit records, revoke sessions after blocking/password replacement, and prevent removal or blocking of the final active administrator. The exact designated account promotion is performed by migration `2026_10_29_000009_add_module_access_and_promote_primary_admin.php`.
 - Local isolated validation: 38 targeted feature tests passed with 172 assertions, including 5 new administrative tests/30 assertions; PHP syntax, Blade compilation and `git diff --check` passed. Production migration and authenticated browser validation remain operational steps.
+
+### Password visibility controls (2026-10-29)
+
+- Added one shared eye-toggle asset pair (`public/password-toggle.js` and `public/password-toggle.css`) and integrated it into login, registration, password reset, Minha conta, and administrative user forms.
+- Controls preserve password/token field names and backend validation; they only switch the local input type, maintain focus, and expose `aria-label`/`aria-pressed` state. No password or token is rendered or logged.
+- Local validation: `PasswordToggleTest`, `AuthenticationTest`, `AccountAndManualLeadTest` and `AdminManagementTest` passed 15 tests/66 assertions; Blade compilation, JavaScript syntax and `git diff --check` passed. Production smoke confirmed both assets HTTP 200 and private routes remain protected.
