@@ -17,7 +17,7 @@ class ScraperClient
     {
         $token = $job->user?->apify_api_token;
         if (!$token) throw new RuntimeException('Configure seu token da Apify em Minha conta antes de iniciar uma busca.');
-        return Http::baseUrl(config('kaizen.apify.base_url'))->withToken($token)->timeout(config('kaizen.apify.timeout'));
+        return Http::baseUrl(config('kaizen.apify.base_url', 'https://api.apify.com/v2'))->withToken($token)->timeout((int) config('kaizen.apify.timeout', 90));
     }
 
     public function create(ProspectingJob $job): string
@@ -41,7 +41,7 @@ class ScraperClient
             'includeWebResults' => false,
             'scrapeDirectories' => false,
         ];
-        $response = $this->apify($job)->post('/acts/'.config('kaizen.apify.actor').'/runs', ['input' => $input]);
+        $response = $this->apify($job)->post('/acts/'.config('kaizen.apify.actor', 'compass~crawler-google-places').'/runs', ['input' => $input]);
         if ($response->failed() || !$response->json('data.id') || !$response->json('data.defaultDatasetId')) throw new RuntimeException('A Apify recusou a busca.');
         return 'apify:'.$response->json('data.id').':'.$response->json('data.defaultDatasetId');
     }
