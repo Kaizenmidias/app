@@ -14,6 +14,7 @@
 
 @if(session('status'))<p class="lead-status">{{ session('status') }}</p>@endif
 @if($errors->any())<div class="lead-errors">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
+@if($resultSummary)<section class="result-summary" aria-label="Resumo da busca"><div><span>Leads coletados</span><strong>{{ $resultSummary['collected'] }}</strong></div><div><span>Leads duplicados</span><strong>{{ $resultSummary['duplicates'] }}</strong></div><div><span>Leads sem site</span><strong>{{ $resultSummary['without_site'] }}</strong></div><div><span>WhatsApp validado</span><strong>{{ $resultSummary['whatsapp_validated'] }}</strong></div></section>@endif
 
 <div class="leads-workspace">
     <aside class="lead-folders" aria-label="Listas de leads">
@@ -29,23 +30,28 @@
         <div class="leads-toolbar">
             <form class="lead-search" method="get" action="{{ $resultJob ? route('leads.results', $resultJob) : route('leads') }}" role="search">
                 @if($activeListId)<input type="hidden" name="list" value="{{ $activeListId }}">@endif
-                <label class="sr-only" for="lead-search">Buscar leads</label><input id="lead-search" name="q" value="{{ $term }}" placeholder="Buscar por nome, e-mail, telefone ou endereço"><button type="submit" class="lead-button lead-button-primary">Buscar</button>
+                <label class="sr-only" for="lead-search">Buscar leads</label><input id="lead-search" name="q" value="{{ $term }}" placeholder="Buscar por nome, e-mail, telefone ou endereço">
+                <select name="contact" aria-label="Filtrar contatos"><option value="all">Todos os contatos</option><option value="email" @selected($contactFilter==='email')>Com e-mail</option><option value="phone" @selected($contactFilter==='phone')>Com telefone</option><option value="site" @selected($contactFilter==='site')>Com site</option><option value="without_site" @selected($contactFilter==='without_site')>Sem site</option></select>
+                <select name="per_page" aria-label="Resultados por página">@foreach([20,30,50,100,150] as $size)<option value="{{ $size }}" @selected($perPage===$size)>{{ $size }} por página</option>@endforeach</select>
+                <button type="submit" class="lead-button lead-button-primary">Filtrar</button>
             </form>
-            <form id="bulk-pipeline-form" method="post" action="{{ route('pipeline.send-many') }}">@csrf<div id="bulk-lead-ids"></div><button type="submit" class="lead-button lead-button-secondary" id="bulk-pipeline" disabled>Enviar selecionados para a pipeline</button></form>
         </div>
+        <div class="bulk-actions" id="bulk-actions"><strong>Ações em massa</strong><form id="bulk-list-form" method="post" action="{{ route('leads.assign-list') }}">@csrf<div class="bulk-lead-ids"></div><select name="lead_list_id"><option value="">Sem lista</option>@foreach($lists as $list)<option value="{{ $list->id }}">{{ $list->name }}</option>@endforeach</select><button type="submit" class="lead-button lead-button-secondary" disabled>Aplicar lista</button></form><form id="bulk-pipeline-form" method="post" action="{{ route('pipeline.send-many') }}">@csrf<div class="bulk-lead-ids"></div><button type="submit" class="lead-button lead-button-secondary" id="bulk-pipeline" disabled>Enviar selecionados para a pipeline</button></form></div>
 
         @if($leads->isEmpty())
             <div class="lead-empty"><strong>Nenhum lead encontrado</strong><p>{{ $term ? 'Tente outro termo de busca.' : 'Os leads das suas buscas concluídas aparecerão aqui.' }}</p></div>
         @else
             <div class="lead-table-wrap">
                 <table class="lead-table">
-                    <thead><tr><th><input type="checkbox" id="select-all" aria-label="Selecionar todos"></th><th>Nome</th><th>Contato</th><th>Endereço</th><th>Lista</th><th>Capturado em</th><th><span class="sr-only">Ações</span></th></tr></thead>
+                    <thead><tr><th><input type="checkbox" id="select-all" aria-label="Selecionar todos"></th><th>Nome</th><th><span class="email-heading">E-mail <button type="button" id="copy-emails" title="Copiar e-mails exibidos ou selecionados" aria-label="Copiar e-mails">⧉</button></span></th><th>Telefone</th><th>Site</th><th>Endereço</th><th>Lista</th><th>Capturado em</th><th><span class="sr-only">Ações</span></th></tr></thead>
                     <tbody>
                     @foreach($leads as $lead)
                         <tr class="lead-row" data-dialog-open="lead-{{ $lead->id }}" tabindex="0">
                             <td><input class="lead-select" type="checkbox" value="{{ $lead->id }}" aria-label="Selecionar {{ $lead->name }}"></td>
                             <td><strong>{{ $lead->name ?: 'Empresa sem nome' }}</strong>@if($lead->category)<small>{{ $lead->category }}</small>@endif</td>
-                            <td><span>{{ $lead->email ?: 'E-mail não informado' }}</span><small>{{ $lead->phone ?: 'Telefone não informado' }}</small>@if($lead->website)<a href="{{ $lead->website }}" target="_blank" rel="noopener">Abrir site</a>@endif</td>
+                            <td class="lead-email" data-email="{{ $lead->email }}">{{ $lead->email ?: 'Não informado' }}</td>
+                            <td>{{ $lead->phone ?: 'Não informado' }}</td>
+                            <td>@if($lead->website)<a href="{{ $lead->website }}" target="_blank" rel="noopener">Abrir site</a>@else Não informado @endif</td>
                             <td>{{ $lead->address ?: 'Não informado' }}</td>
                             <td>{{ $lead->list?->name ?: 'Sem lista' }}</td>
                             <td>{{ optional($lead->created_at)->format('d/m/Y H:i') }}</td>

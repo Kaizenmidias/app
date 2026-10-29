@@ -235,6 +235,22 @@
   }
 
   function renderKPIs() {
+    const real = window.KAIZEN_STATS;
+    if (real) {
+      $("#kpi-jobs").textContent = fmt(real.jobs);
+      $("#kpi-jobs-hint").textContent = real.busy ? `${real.busy} em andamento` : `${real.completed} concluídas`;
+      $("#kpi-places").textContent = fmt(real.leads);
+      $("#kpi-phone").textContent = fmt(real.phone);
+      $("#kpi-phone-hint").textContent = real.leads ? `${Math.round((real.phone / real.leads) * 100)}% dos leads` : " ";
+      $("#kpi-email").textContent = fmt(real.email);
+      $("#kpi-email-hint").textContent = real.leads ? `${Math.round((real.email / real.leads) * 100)}% dos leads` : " ";
+      $("#kpi-leads").textContent = fmt(real.leads);
+      $("#kpi-duplicates").textContent = fmt(real.duplicates);
+      $("#kpi-without-site").textContent = fmt(real.without_site);
+      $("#kpi-whatsapp").textContent = fmt(real.whatsapp_validated);
+      const badge = $("#nav-badge"); badge.hidden = !real.busy; badge.textContent = real.busy;
+      return;
+    }
     const done = state.jobs.filter((j) => j.status === "ok");
     const s = done.map((j) => state.stats[j.id]).filter((x) => x && x.n != null);
     const sum = (k) => s.reduce((a, x) => a + x[k], 0);

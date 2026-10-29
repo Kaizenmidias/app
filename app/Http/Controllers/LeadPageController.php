@@ -21,18 +21,33 @@ class LeadPageController extends Controller
     {
         $user = $request->user();
         $term = trim((string) $request->query('q'));
+        $contact = (string) $request->query('contact', 'all');
+        $allowedPerPage = [20, 30, 50, 100, 150];
+        $perPage = in_array($request->integer('per_page'), $allowedPerPage, true) ? $request->integer('per_page') : 20;
         $listId = $request->integer('list') ?: null;
         if ($listId && !$user->leadLists()->whereKey($listId)->exists()) abort(404);
         $query = $user->leads()->with(['job', 'list'])->latest();
         if ($job) $query->where('prospecting_job_id', $job->id);
         if ($listId) $query->where('lead_list_id', $listId);
+        if ($contact === 'email') $query->whereNotNull('email')->where('email', '<>', '');
+        if ($contact === 'phone') $query->whereNotNull('phone')->where('phone', '<>', '');
+        if ($contact === 'site') $query->whereNotNull('website')->where('website', '<>', '');
+        if ($contact === 'without_site') $query->where(fn ($builder) => $builder->whereNull('website')->orWhere('website', ''));
         if ($term) $query->where(fn ($builder) => $builder->where('name', 'like', "%{$term}%")->orWhere('email', 'like', "%{$term}%")->orWhere('phone', 'like', "%{$term}%")->orWhere('address', 'like', "%{$term}%"));
         return view('leads.index', [
-            'leads' => $query->paginate(25)->withQueryString(),
+            'leads' => $query->paginate($perPage)->withQueryString(),
             'term' => $term,
             'lists' => $user->leadLists()->withCount('leads')->orderBy('name')->get(),
             'activeListId' => $listId,
             'resultJob' => $job,
+            'contactFilter' => $contact,
+            'perPage' => $perPage,
+            'resultSummary' => $job ? [
+                'collected' => (int) data_get($job->search_parameters, 'import_report.total', $job->leads()->count()),
+                'duplicates' => (int) data_get($job->search_parameters, 'import_report.duplicates', 0),
+                'without_site' => $job->leads()->where(fn ($builder) => $builder->whereNull('website')->orWhere('website', ''))->count(),
+                'whatsapp_validated' => $job->leads()->get(['raw_data'])->filter(fn ($lead) => (bool) data_get($lead->raw_data, 'whatsapp_validated', false))->count(),
+            ] : null,
         ]);
     }
 
@@ -59,6 +74,18 @@ class LeadPageController extends Controller
         $data = $this->validateLead($request);
         $lead->update($this->leadAttributes($data, $request->user()->id, $lead->source ?: 'manual', $lead->raw_data ?? []));
         return back()->with('status', 'Lead atualizado.');
+    }
+
+    public function assignList(Request $request)
+    {
+        $data = $request->validate([
+            'lead_ids' => ['required', 'array', 'min:1'], 'lead_ids.*' => ['integer'],
+            'lead_list_id' => ['nullable', 'integer', Rule::exists('lead_lists', 'id')->where('user_id', $request->user()->id)],
+        ]);
+        $leads = Lead::where('user_id', $request->user()->id)->whereIn('id', $data['lead_ids'])->get();
+        abort_unless($leads->count() === count(array_unique($data['lead_ids'])), 403);
+        Lead::whereIn('id', $leads->pluck('id'))->update(['lead_list_id' => $data['lead_list_id'] ?? null]);
+        return back()->with('status', $leads->count().' leads atualizados.');
     }
 
     private function validateLead(Request $request): array
