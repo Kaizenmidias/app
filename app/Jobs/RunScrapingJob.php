@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\ProspectingJob;
+use App\Models\{ProspectingJob, ProspectingJobAttempt};
 use App\Services\ScraperClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -43,13 +43,15 @@ class RunScrapingJob implements ShouldQueue
         }
 
         $job = ProspectingJob::query()->findOrFail($this->jobId);
+        $attempt = ProspectingJobAttempt::create(['prospecting_job_id' => $job->id, 'provider' => 'apify', 'status' => 'submitting', 'request_hash' => hash('sha256', json_encode([$job->keywords, $job->location, $job->search_parameters], JSON_UNESCAPED_UNICODE)), 'started_at' => now()]);
         try {
             $externalId = app(ScraperClient::class)->create($job);
+            $attempt->update(['external_id' => $externalId, 'status' => 'submitted']);
             $saved = ProspectingJob::query()->whereKey($this->jobId)->where('submission_attempt_token', $attemptToken)->whereNull('scraper_job_id')->update(['scraper_job_id' => $externalId, 'submission_intent_at' => null, 'submission_attempt_token' => null, 'updated_at' => now()]);
             if ($saved !== 1) return;
         } catch (\Throwable $e) {
             $definitiveRejection = $e->getCode() >= 400 && $e->getCode() < 500;
-            DB::transaction(function () use ($attemptToken, $e, $definitiveRejection) {
+            DB::transaction(function () use ($attemptToken, $attempt, $e, $definitiveRejection) {
                 $locked = ProspectingJob::query()->whereKey($this->jobId)->where('submission_attempt_token', $attemptToken)->lockForUpdate()->first();
                 if (!$locked || $locked->scraper_job_id || in_array($locked->status, ['ok', 'failed'], true)) return;
                 if ($locked->scraper_slot_acquired && $definitiveRejection) {
@@ -64,6 +66,7 @@ class RunScrapingJob implements ShouldQueue
                     'submission_attempt_token' => null,
                     'finished_at' => $definitiveRejection ? now() : null,
                 ]);
+                $attempt->update(['status' => $definitiveRejection ? 'rejected' : 'unknown', 'error_message' => $e->getMessage(), 'finished_at' => $definitiveRejection ? now() : null]);
             });
             Log::warning('Scraper submission outcome unknown', ['job_id' => $this->jobId, 'error' => $e->getMessage()]);
             return;
