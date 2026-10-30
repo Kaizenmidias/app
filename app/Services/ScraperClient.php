@@ -70,7 +70,9 @@ class ScraperClient
         $response = $this->apify($job)->get('/actor-runs/'.$run);
         if ($response->failed()) throw new RuntimeException('Status da Apify indispon�vel.');
         $status = strtoupper((string) $response->json('data.status', 'RUNNING'));
-        return ['status' => match ($status) { 'SUCCEEDED' => 'completed', 'FAILED', 'ABORTED', 'TIMED-OUT' => 'failed', default => 'working' }, 'progress' => $status === 'SUCCEEDED' ? 100 : 50];
+        // O actor pode encerrar como ABORTED depois de encontrar resultados
+        // válidos e publicar o dataset. Isso não deve descartar a coleta.
+        return ['status' => match ($status) { 'SUCCEEDED', 'ABORTED' => 'completed', 'FAILED', 'TIMED-OUT' => 'failed', default => 'working' }, 'progress' => in_array($status, ['SUCCEEDED', 'ABORTED'], true) ? 100 : 50];
     }
 
     public function import(ProspectingJob $job, ?string $claimToken = null, ?callable $renewClaim = null): ScraperImportOutcome
