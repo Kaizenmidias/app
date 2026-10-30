@@ -239,6 +239,12 @@
         if (j.status === "failed" && j.id === state.activeJobId) { setSearchProgress("A busca falhou. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; }
         state.prevStatus[j.id] = j.status;
       }
+      // Compatibilidade com respostas legadas que retornam o ID numérico em
+      // formato diferente do POST: uma falha nunca pode deixar o overlay preso.
+      if (state.activeJobId && !state.jobs.some((j) => j.id === state.activeJobId && (j.status === "pending" || j.status === "working"))) {
+        const failed = state.jobs.find((j) => j.status === "failed");
+        if (failed) { setSearchProgress("A busca falhou. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; }
+      }
       renderJobs();
       if (!state.booted) { state.booted = true; openFromHash(); }
     } catch {
