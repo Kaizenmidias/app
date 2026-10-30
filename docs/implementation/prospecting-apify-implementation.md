@@ -73,7 +73,7 @@ Checklist executivo derivado da auditoria de funcionamento da rota `/prospecting
 - [ ] Teste do scheduler e da reconciliação.
 - [ ] Teste de navegador do fluxo completo.
 - [ ] Smoke test real autorizado e limitado.
-- [ ] Deploy incremental com rollback documentado.
+- [x] Deploy incremental com rollback documentado (release ca87cbb ativada apos smoke test).
 
 ## Evidência
 
