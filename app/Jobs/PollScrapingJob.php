@@ -66,7 +66,9 @@ class PollScrapingJob implements ShouldQueue
                     $parameters['import_report'] = ['requested' => $requested, 'collected' => $added + $duplicates, 'added' => $added, 'duplicates' => $duplicates, 'rejected' => (int) ($previous['rejected'] ?? 0) + $outcome->rejected, 'total' => $added, 'completed_at' => null];
                     $nextJob = $job->fresh(['user']);
                     $nextJob->search_parameters = $parameters;
+                    $refillAttempt = ProspectingJobAttempt::create(['prospecting_job_id' => $job->id, 'provider' => 'apify', 'status' => 'submitting', 'request_hash' => hash('sha256', json_encode([$nextJob->keywords, $nextJob->location, $parameters], JSON_UNESCAPED_UNICODE)), 'started_at' => now()]);
                     $nextId = app(ScraperClient::class)->create($nextJob);
+                    $refillAttempt->update(['external_id' => $nextId, 'status' => 'submitted']);
                     ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['scraper_job_id' => $nextId, 'status' => 'working', 'progress' => 1, 'search_parameters' => $parameters]);
                     self::dispatch($job->id)->delay(now()->addSeconds(config('kaizen.scraper.poll_seconds')));
                     return;
@@ -74,7 +76,7 @@ class PollScrapingJob implements ShouldQueue
                 unset($parameters['refill_max_results'], $parameters['refill_attempts']);
                 $parameters['import_report'] = ['requested' => $requested, 'collected' => $added + $duplicates, 'added' => $added, 'duplicates' => $duplicates, 'rejected' => (int) ($previous['rejected'] ?? 0) + $outcome->rejected, 'total' => $added, 'completed_at' => now()->toIso8601String()];
                 ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['search_parameters' => $parameters]);
-                $this->finish($job, 'ok', null, $claimToken);
+                $this->finish($job, $remaining > 0 ? 'partial' : 'ok', $remaining > 0 ? 'O provedor nao retornou novos leads suficientes.' : null, $claimToken);
                 return;
             }
             if (in_array($status, ['failed', 'error'], true)) { $this->finish($job, 'failed', 'Scraper reportou falha.', $claimToken); return; }
@@ -96,7 +98,7 @@ class PollScrapingJob implements ShouldQueue
             if (!$locked) return;
             $capacity = DB::table('scraper_capacity')->where('id', 1)->lockForUpdate()->first();
             if ($locked->scraper_slot_acquired && $capacity && $capacity->used > 0) DB::table('scraper_capacity')->where('id', 1)->update(['used' => $capacity->used - 1, 'updated_at' => now()]);
-            $locked->update(['status' => $status, 'progress' => $status === 'ok' ? 100 : $locked->progress, 'scraper_slot_acquired' => false, 'error_message' => $error, 'finished_at' => now(), 'polling_claimed_at' => null, 'polling_claim_token' => null]);
+            $locked->update(['status' => $status, 'progress' => in_array($status, ['ok', 'partial'], true) ? 100 : $locked->progress, 'scraper_slot_acquired' => false, 'error_message' => $error, 'finished_at' => now(), 'polling_claimed_at' => null, 'polling_claim_token' => null]);
         }, 3);
     }
 

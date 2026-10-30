@@ -28,7 +28,7 @@ class ScraperProcessingTest extends TestCase
  }
  private function job(array $extra=[]): ProspectingJob { $u=User::factory()->create(['email_verified_at'=>now()]); \DB::table('scraper_capacity')->update(['used'=>1]); return ProspectingJob::create(array_merge(['user_id'=>$u->id,'keywords'=>['cafe'],'latitude'=>1,'longitude'=>2,'status'=>'working','scraper_job_id'=>'remote-1','scraper_slot_acquired'=>true,'started_at'=>now()],$extra)); }
  public function test_polling_imports_completed_csv_idempotently(): void {
-  $job=$this->job(); Http::fake(['*/api/v1/jobs/remote-1'=>Http::response(['Status'=>'ok','Progress'=>100]),'*/api/v1/jobs/remote-1/download'=>Http::response("title,place_id\nCafe,p1\n")]);
+  $job=$this->job(['search_parameters'=>['max_results'=>1]]); Http::fake(['*/api/v1/jobs/remote-1'=>Http::response(['Status'=>'ok','Progress'=>100]),'*/api/v1/jobs/remote-1/download'=>Http::response("title,place_id\nCafe,p1\n")]);
   (new PollScrapingJob($job->id))->handle(); (new PollScrapingJob($job->id))->handle();
   $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'ok','progress'=>100]); $this->assertSame(1,Lead::count());
  }

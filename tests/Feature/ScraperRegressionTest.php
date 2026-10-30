@@ -21,7 +21,7 @@ class ScraperRegressionTest extends TestCase
  }
 
  public function test_completed_poll_clears_persistent_claim_and_repeated_poll_is_noop(): void {
-  $job=$this->job();
+  $job=$this->job(['search_parameters'=>['max_results'=>1]]);
   Http::fake(['*/api/v1/jobs/remote-1'=>Http::response(['Status'=>'ok','Progress'=>100]),'*/api/v1/jobs/remote-1/download'=>Http::response("title,place_id
 Cafe,p1
 ")]);
