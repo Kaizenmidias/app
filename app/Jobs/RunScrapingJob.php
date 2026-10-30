@@ -19,7 +19,7 @@ class RunScrapingJob implements ShouldQueue
     public $timeout = 75;
     public $backoff = [30, 120, 300];
 
-    public function __construct(public int $jobId) {}
+    public function __construct(public int $jobId, public bool $forceSubmit = true) {}
 
     public function handle(): void
     {
@@ -28,9 +28,10 @@ class RunScrapingJob implements ShouldQueue
             $current = ProspectingJob::query()->whereKey($this->jobId)->lockForUpdate()->first();
             $capacity = DB::table('scraper_capacity')->where('id', 1)->lockForUpdate()->first();
             $limit = max(1, (int) config('kaizen.apify.concurrency', 4));
-            if (!$current || !$capacity || $current->scraper_job_id || in_array($current->status, ['ok', 'failed'], true) || $current->scraper_slot_acquired || $capacity->used >= $limit) return false;
-            DB::table('scraper_capacity')->where('id', 1)->update(['used' => $capacity->used + 1, 'updated_at' => now()]);
-            $current->update(['scraper_slot_acquired' => true, 'status' => 'working', 'started_at' => $current->started_at ?: now(), 'progress' => 1, 'submission_intent_at' => now(), 'submission_attempt_token' => $attemptToken]);
+            if (!$current || !$capacity || $current->scraper_job_id || in_array($current->status, ['ok', 'failed'], true) || $current->scraper_slot_acquired || (!$this->forceSubmit && $capacity->used >= $limit)) return false;
+            $slot = $capacity->used < $limit;
+            if ($slot) DB::table('scraper_capacity')->where('id', 1)->update(['used' => $capacity->used + 1, 'updated_at' => now()]);
+            $current->update(['scraper_slot_acquired' => $slot, 'status' => 'working', 'started_at' => $current->started_at ?: now(), 'progress' => 1, 'submission_intent_at' => now(), 'submission_attempt_token' => $attemptToken]);
             return true;
         }, 3);
         if (!$claimed) {
