@@ -197,8 +197,9 @@
   // ───────────────────────── health + jobs ─────────────────────────
   function setHealth(ok) {
     const h = $("#health");
+    if (!h) return;
     h.className = "health " + (ok ? "ok" : "down");
-    h.lastElementChild.textContent = ok ? "scraper online" : "offline: abra o Docker Desktop";
+    if (h.lastElementChild) h.lastElementChild.textContent = ok ? "scraper online" : "offline: abra o Docker Desktop";
   }
 
   async function refreshJobs() {
