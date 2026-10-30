@@ -221,8 +221,10 @@
         const prev = state.prevStatus[j.id];
         if (j.status === "ok" && state.counts[j.id] == null) fetchCount(j);
         if (j.id === state.activeJobId && (j.status === "pending" || j.status === "working")) setSearchProgress(j.status === "pending" ? "Busca iniciada. Preparando a coleta…" : "Busca em andamento. Coletando leads…");
-        if (prev && prev !== j.status && j.status === "ok") { notifyDone(j); if (j.id === state.activeJobId) { setSearchProgress("Busca concluída. Abrindo os resultados…", "complete"); openResults(j); state.activeJobId = null; } }
-        if (prev && prev !== j.status && j.status === "failed") { toast(`A busca “${j.name}” falhou.`); if (j.id === state.activeJobId) { setSearchProgress("A busca falhou. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; } }
+        if (prev && prev !== j.status && j.status === "ok") notifyDone(j);
+        if (j.status === "ok" && j.id === state.activeJobId) { setSearchProgress("Busca concluída. Abrindo os resultados…", "complete"); openResults(j); state.activeJobId = null; }
+        if (prev && prev !== j.status && j.status === "failed") toast(`A busca “${j.name}” falhou.`);
+        if (j.status === "failed" && j.id === state.activeJobId) { setSearchProgress("A busca falhou. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; }
         state.prevStatus[j.id] = j.status;
       }
       renderJobs();
