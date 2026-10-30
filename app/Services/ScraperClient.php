@@ -28,7 +28,7 @@ class ScraperClient
             return $response->json('id');
         }
         $params = $job->search_parameters ?? [];
-        $max = (int) ($params['max_results'] ?? match ((int) ($params['depth'] ?? 5)) { 1 => 20, 4 => 50, 8 => 100, default => 50 });
+        $max = (int) ($params['refill_max_results'] ?? $params['max_results'] ?? match ((int) ($params['depth'] ?? 5)) { 1 => 20, 4 => 50, 8 => 100, default => 50 });
         $terms = array_values(array_filter(array_map('strval', (array) $job->keywords), fn ($value) => trim($value) !== ''));
         if (!$terms) {
             $terms = array_values(array_filter(array_map('strval', (array) data_get($params, 'keywords', [])), fn ($value) => trim($value) !== ''));

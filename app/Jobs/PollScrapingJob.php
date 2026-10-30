@@ -52,7 +52,24 @@ class PollScrapingJob implements ShouldQueue
                 }
                 $parameters = $job->search_parameters ?? [];
                 $requested = (int) ($parameters['max_results'] ?? match ((int) ($parameters['depth'] ?? 5)) { 1 => 20, 4 => 50, 8 => 100, default => 50 });
-                $parameters['import_report'] = ['requested' => $requested, 'added' => $outcome->accepted, 'duplicates' => $outcome->updated, 'rejected' => $outcome->rejected, 'total' => $outcome->accepted, 'completed_at' => now()->toIso8601String()];
+                $previous = $parameters['import_report'] ?? [];
+                $added = (int) ($previous['added'] ?? 0) + $outcome->accepted;
+                $duplicates = (int) ($previous['duplicates'] ?? 0) + $outcome->updated;
+                $attempts = (int) ($parameters['refill_attempts'] ?? 0);
+                $remaining = max(0, $requested - $added);
+                if (str_starts_with((string) $job->scraper_job_id, 'apify:') && $remaining > 0 && $attempts < 3) {
+                    $parameters['refill_attempts'] = $attempts + 1;
+                    $parameters['refill_max_results'] = min($requested, $remaining);
+                    $parameters['import_report'] = ['requested' => $requested, 'collected' => $added + $duplicates, 'added' => $added, 'duplicates' => $duplicates, 'rejected' => (int) ($previous['rejected'] ?? 0) + $outcome->rejected, 'total' => $added, 'completed_at' => null];
+                    $nextJob = $job->fresh(['user']);
+                    $nextJob->search_parameters = $parameters;
+                    $nextId = app(ScraperClient::class)->create($nextJob);
+                    ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['scraper_job_id' => $nextId, 'status' => 'working', 'progress' => 1, 'search_parameters' => $parameters]);
+                    self::dispatch($job->id)->delay(now()->addSeconds(config('kaizen.scraper.poll_seconds')));
+                    return;
+                }
+                unset($parameters['refill_max_results'], $parameters['refill_attempts']);
+                $parameters['import_report'] = ['requested' => $requested, 'collected' => $added + $duplicates, 'added' => $added, 'duplicates' => $duplicates, 'rejected' => (int) ($previous['rejected'] ?? 0) + $outcome->rejected, 'total' => $added, 'completed_at' => now()->toIso8601String()];
                 ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['search_parameters' => $parameters]);
                 $this->finish($job, 'ok', null, $claimToken);
                 return;
