@@ -36,7 +36,7 @@
   const norm = (j) => {
     const d = j.Data || j.data || {};
     return {
-      id: j.ID || j.id, name: j.Name || j.name, date: j.Date || j.date,
+      id: String(j.ID || j.id), name: j.Name || j.name, date: j.Date || j.date,
       status: (j.Status || j.status || "").toLowerCase(), keywords: d.keywords || [],
       depth: d.depth, email: d.email, lang: d.lang,
       lat: +d.lat || 0, lon: +d.lon || 0, radius: +d.radius || 0,
@@ -45,7 +45,7 @@
   };
 
   const state = {
-    jobs: [], counts: {}, prevStatus: {}, current: null, rows: [], visible: [],
+    jobs: [], counts: {}, prevStatus: {}, current: null, activeJobId: null, rows: [], visible: [],
     sort: { key: null, dir: 1 }, geo: null, submitting: false, depth: 5, email: false,
   };
 
@@ -54,6 +54,13 @@
     const t = $("#toast");
     t.textContent = msg; t.hidden = false;
     clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), ms);
+  }
+  function setSearchProgress(message, kind = "working") {
+    const el = $("#search-progress");
+    if (!el) return;
+    el.textContent = message || "";
+    el.hidden = !message;
+    el.className = `search-progress${kind === "complete" ? " is-complete" : kind === "failed" ? " is-failed" : ""}`;
   }
   function store(k, v) { try { localStorage.setItem("ms:" + k, JSON.stringify(v)); } catch {} }
   function load(k, d) { try { const v = localStorage.getItem("ms:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } }
@@ -213,8 +220,9 @@
       for (const j of state.jobs) {
         const prev = state.prevStatus[j.id];
         if (j.status === "ok" && state.counts[j.id] == null) fetchCount(j);
-        if (prev && prev !== j.status && j.status === "ok") { notifyDone(j); redirectToCompletedJob(j); }
-        if (prev && prev !== j.status && j.status === "failed") toast(`A busca “${j.name}” falhou.`);
+        if (j.id === state.activeJobId && (j.status === "pending" || j.status === "working")) setSearchProgress(j.status === "pending" ? "Busca iniciada. Preparando a coleta…" : "Busca em andamento. Coletando leads…");
+        if (prev && prev !== j.status && j.status === "ok") { notifyDone(j); if (j.id === state.activeJobId) { setSearchProgress("Busca concluída. Abrindo os resultados…", "complete"); openResults(j); state.activeJobId = null; } }
+        if (prev && prev !== j.status && j.status === "failed") { toast(`A busca “${j.name}” falhou.`); if (j.id === state.activeJobId) { setSearchProgress("A busca falhou. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; } }
         state.prevStatus[j.id] = j.status;
       }
       renderJobs();
@@ -249,10 +257,6 @@
   async function notifyDone(j) {
     try { toast(`“${j.name}” terminou: ${(await fetchRows(j.id)).length} resultados`, 6000); }
     catch { toast(`“${j.name}” terminou`); }
-  }
-
-  function redirectToCompletedJob(j) {
-    window.location.assign(`/leads/resultado/${encodeURIComponent(j.id)}`);
   }
 
   function renderJobs() {
@@ -424,8 +428,10 @@
         try { const j = await r.json(); if (j.message) msg += ` ${j.message}`; } catch {}
         throw new Error(msg);
       }
-      const busy = state.jobs.some((j) => j.status === "working" || j.status === "pending");
-      toast(busy ? "Busca criada. Ela entra na fila depois da atual." : "Busca criada! Acompanhe em “Suas buscas”.");
+      const responseBody = await r.text();
+      const created = responseBody.trim() ? JSON.parse(responseBody) : {};
+      state.activeJobId = created.id != null ? String(created.id) : null;
+      setSearchProgress("Busca iniciada. Preparando a coleta…");
       store("prefs", { lang, depth, radius: +$("#radius").value });
       $("#keyword").value = "";
       refreshJobs();
