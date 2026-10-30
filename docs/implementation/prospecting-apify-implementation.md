@@ -58,7 +58,7 @@ Checklist executivo derivado da auditoria de funcionamento da rota `/prospecting
 - [ ] Garantir exatamente um POST por clique válido.
 - [ ] Consultar apenas o job ativo.
 - [ ] Encerrar o overlay em todos os estados terminais.
-- [ ] Remover downloads CSV usados como polling interno.
+- [x] Remover downloads CSV usados como polling interno.
 - [ ] Abrir modal de resultados com relatório e botão “Ir para Leads”.
 - [ ] Corrigir versionamento automático dos assets.
 - [ ] Corrigir strings UTF-8 corrompidas.
