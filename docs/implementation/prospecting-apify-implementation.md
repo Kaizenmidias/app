@@ -14,9 +14,9 @@ Checklist executivo derivado da auditoria de funcionamento da rota `/prospecting
 
 - [ ] Corrigir o scheduler da aplicação para executar `scraper:reconcile`.
 - [ ] Unificar a fonte de verdade da capacidade de execução.
-- [ ] Reconciliar contadores de capacidade com jobs realmente ativos.
+- [x] Reconciliar contadores de capacidade com jobs realmente ativos.
 - [ ] Reiniciar workers de forma controlada após troca de release.
-- [ ] Impedir submissões duplicadas simultâneas por usuário.
+- [x] Impedir submissões duplicadas simultâneas por usuário.
 - [ ] Classificar e encerrar jobs órfãos sem apagar dados de leads.
 
 ## Fase 1 — contrato único da API
