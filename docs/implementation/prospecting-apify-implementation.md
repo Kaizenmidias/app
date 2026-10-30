@@ -65,7 +65,7 @@ Checklist executivo derivado da auditoria de funcionamento da rota `/prospecting
 
 ## Fase 6 — validação e publicação
 
-- [ ] Testes do payload exato enviado ao actor.
+- [x] Testes do payload exato enviado ao actor.
 - [ ] Testes de todos os estados remotos.
 - [ ] Testes MySQL de deduplicação concorrente.
 - [ ] Testes de reposição com duplicados.
