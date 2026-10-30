@@ -5,7 +5,7 @@
 
   const API = "/api/v1/jobs";
   const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || decodeURIComponent((document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/)||[])[1]||"");
-  const apiFetch = async (url, options={}) => { const method = (options.method || "GET").toUpperCase(); let token = csrf(); if (method !== "GET") { const tokenResponse = await fetch(`${API}/csrf-token`, { credentials: "same-origin", cache: "no-store" }); if (tokenResponse.ok) token = (await tokenResponse.json()).token || token; } return fetch(url, {credentials: "same-origin", ...options, headers: {...(options.headers||{}), ...(method !== "GET" ? {"X-CSRF-TOKEN": token} : {})}}); };
+  const apiFetch = async (url, options={}) => { const method = (options.method || "GET").toUpperCase(); let token = csrf(); if (method !== "GET") { const tokenResponse = await fetch(`${API}/csrf-token`, { credentials: "same-origin", cache: "no-store" }); if (tokenResponse.ok) { try { const payload = await tokenResponse.json(); token = payload.token || token; } catch {} } } return fetch(url, {credentials: "same-origin", ...options, headers: {...(options.headers||{}), ...(method !== "GET" ? {"X-CSRF-TOKEN": token} : {})}}); };
   const POLL_MS = 4000;
   const JOINER = { pt: "em", en: "in", es: "en" };   // "dentista em Barra Funda"
   const STATUS = { ok: "Concluída", working: "Pesquisando…", pending: "Na fila", failed: "Falhou" };
@@ -206,7 +206,8 @@
     try {
       const r = await apiFetch(API, { cache: "no-store" });
       if (!r.ok) throw new Error(r.status);
-      const list = (await r.json()) || [];
+      const body = await r.text();
+      const list = body.trim() ? (JSON.parse(body) || []) : [];
       setHealth(true);
       state.jobs = list.map(norm).sort((a, b) => new Date(b.date) - new Date(a.date));
       for (const j of state.jobs) {
@@ -339,7 +340,8 @@
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&accept-language=pt-BR${extra}&q=${encodeURIComponent(place)}`;
     const r = await fetch(url);
     if (!r.ok) throw new Error("geocode " + r.status);
-    return (await r.json())[0];
+    const body = await r.text();
+    return body.trim() ? JSON.parse(body)[0] : null;
   }
   async function geocode(place) {
     const key = place.trim().toLowerCase();
