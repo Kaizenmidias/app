@@ -478,6 +478,12 @@
   $("#submit").addEventListener("pointerdown", () => {
     if (!state.submitting) setSearchProgress("Buscando Leads...");
   });
+  // Impede o submit nativo (que apenas recarrega a página/GET /jobs) e força
+  // o fluxo assíncrono que valida os campos e envia POST /api/v1/jobs.
+  $("#submit").addEventListener("click", (e) => {
+    e.preventDefault();
+    $("#search-form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  });
 
   // ───────────────────────── results ─────────────────────────
   function insideShare(job, rows) {
