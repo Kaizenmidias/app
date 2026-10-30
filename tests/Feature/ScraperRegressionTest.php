@@ -68,6 +68,14 @@ Cafe,p1
   Queue::fake(); $job=$this->job(['status'=>'unknown','scraper_job_id'=>null,'polling_claimed_at'=>now()->subMinutes(11)]);
   $this->artisan('scraper:reconcile')->assertExitCode(0); Queue::assertNotPushed(PollScrapingJob::class);
  }
+ public function test_reconcile_closes_stale_unknown_without_external_id_and_releases_capacity(): void {
+  Queue::fake(); $job=$this->job(['status'=>'unknown','scraper_job_id'=>null]); DB::table('prospecting_jobs')->where('id',$job->id)->update(['updated_at'=>now()->subMinutes(20)]);
+  $job->attempts()->create(['provider'=>'apify','status'=>'unknown','started_at'=>now()->subMinutes(20)]);
+  Artisan::call('scraper:reconcile');
+  $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'failed','scraper_slot_acquired'=>0]);
+  $this->assertDatabaseHas('prospecting_job_attempts',['prospecting_job_id'=>$job->id,'status'=>'reconciled_failed']);
+  $this->assertSame(0,(int)DB::table('scraper_capacity')->where('id',1)->value('used'));
+ }
 
  public function test_lines_without_external_identifier_are_ignored(): void {
   $job=$this->job();

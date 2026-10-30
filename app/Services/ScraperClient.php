@@ -2,7 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\{Lead, ProspectingJob};
+use App\Models\{Lead, ProspectingJob, ProspectingJobCandidate};
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\{DB, Http};
 use RuntimeException;
 
@@ -51,7 +52,7 @@ class ScraperClient
             $message = (string) $response->json('error.message', 'A Apify recusou a busca.');
             throw new RuntimeException('A Apify recusou a busca: '.$message, $response->status());
         }
-        if (!$response->json('data.id') || !$response->json('data.defaultDatasetId')) throw new RuntimeException('A Apify n�o retornou os identificadores da execu��o.');
+        if (!$response->json('data.id') || !$response->json('data.defaultDatasetId')) throw new RuntimeException('A Apify não retornou os identificadores da execução.');
         return 'apify:'.$response->json('data.id').':'.$response->json('data.defaultDatasetId');
     }
 
@@ -64,7 +65,7 @@ class ScraperClient
         }
         [, $run] = explode(':', $job->scraper_job_id, 3);
         $response = $this->apify($job)->get('/actor-runs/'.$run);
-        if ($response->failed()) throw new RuntimeException('Status da Apify indispon�vel.');
+        if ($response->failed()) throw new RuntimeException('Status da Apify indisponível.');
         $status = strtoupper((string) $response->json('data.status', 'RUNNING'));
         // O actor pode encerrar como ABORTED depois de encontrar resultados
         // válidos e publicar o dataset. Isso não deve descartar a coleta.
@@ -84,9 +85,9 @@ class ScraperClient
         if (!str_starts_with((string) $job->scraper_job_id, 'apify:')) return $this->importLegacy($job, $claimToken, $renewClaim);
         [, , $dataset] = explode(':', $job->scraper_job_id, 3);
         $response = $this->apify($job)->get('/datasets/'.$dataset.'/items', ['format' => 'json', 'clean' => 'true']);
-        if ($response->failed()) throw new RuntimeException('Resultados da Apify indispon�veis.');
+        if ($response->failed()) throw new RuntimeException('Resultados da Apify indisponíveis.');
         $items = $response->json();
-        if (!is_array($items)) throw new RuntimeException('Formato de resultado inv�lido na Apify.');
+        if (!is_array($items)) throw new RuntimeException('Formato de resultado inválido na Apify.');
         $rows = array_map(fn ($item) => [
             'place_id' => $item['placeId'] ?? $item['place_id'] ?? $item['cid'] ?? null,
             'title' => $item['title'] ?? $item['name'] ?? '',
@@ -127,7 +128,9 @@ class ScraperClient
             $old = DB::transaction(function () use ($job, $claimToken, $external, $data) {
                 if ($claimToken && !ProspectingJob::whereKey($job->id)->where('polling_claim_token', $claimToken)->lockForUpdate()->exists()) return null;
                 $attributes = ['lead_list_id' => $job->lead_list_id, 'prospecting_job_id' => $job->id, 'name' => $data['title'] ?? '', 'phone' => $data['phone'] ?? null, 'email' => $data['emails'] ?? null, 'website' => $data['website'] ?? null, 'instagram'=>$data['instagram']??null, 'linkedin'=>$data['linkedin']??null, 'category' => $data['category'] ?? null, 'address' => $data['address'] ?? null, 'latitude' => is_numeric($data['latitude'] ?? null) ? $data['latitude'] : null, 'longitude' => is_numeric($data['longitude'] ?? null) ? $data['longitude'] : null, 'source' => 'apify_google_places', 'raw_data' => $data['raw_data'] ?? $data];
-                $lead = Lead::firstOrCreate(['user_id' => $job->user_id, 'external_place_id' => $external], $attributes);
+                try { $lead = Lead::firstOrCreate(['user_id' => $job->user_id, 'external_place_id' => $external], $attributes); }
+                catch (QueryException $e) { if ((string) $e->getCode() !== '23000') throw $e; $lead = Lead::where('user_id', $job->user_id)->where('external_place_id', $external)->firstOrFail(); }
+                $created = $lead->wasRecentlyCreated;
                 if (!$lead->wasRecentlyCreated) {
                     $enriched = [];
                     foreach (['phone','email','website','instagram','linkedin','category','address'] as $field) {
@@ -135,7 +138,8 @@ class ScraperClient
                     }
                     if ($enriched) $lead->update($enriched);
                 }
-                return !$lead->wasRecentlyCreated;
+                ProspectingJobCandidate::firstOrCreate(['prospecting_job_id' => $job->id, 'external_place_id' => $external], ['lead_id' => $lead->id, 'disposition' => $created ? 'new' : 'duplicate']);
+                return !$created;
             });
             if ($old === null) return new ScraperImportOutcome($accepted, $updated, $rejected, false, true);
             $old ? $updated++ : $accepted++;

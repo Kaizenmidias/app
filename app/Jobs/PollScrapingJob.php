@@ -28,7 +28,7 @@ class PollScrapingJob implements ShouldQueue
         $claimToken = null;
         try {
             $job = ProspectingJob::query()->find($this->jobId);
-            if (!$job || !$job->scraper_job_id || in_array($job->status, ['ok', 'failed'], true)) return;
+            if (!$job || !$job->scraper_job_id || in_array($job->status, ['ok', 'partial', 'failed', 'cancelled'], true)) return;
             $claimToken = (string) Str::uuid();
             $this->claimToken = $claimToken;
             $claimed = ProspectingJob::query()->whereKey($job->id)->where(function ($query) {
@@ -71,7 +71,8 @@ class PollScrapingJob implements ShouldQueue
                 if (str_starts_with((string) $job->scraper_job_id, 'apify:') && $remaining > 0 && !$noProgress && $candidateTotal < $candidateLimit && $attempts < 3) {
                     ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['status' => 'refilling', 'updated_at' => now()]);
                     $parameters['refill_attempts'] = $attempts + 1;
-                    $parameters['refill_max_results'] = min($requested, $remaining);
+                    $remainingCandidateBudget = max(0, $candidateLimit - $candidateTotal);
+                    $parameters['refill_max_results'] = min($remainingCandidateBudget, max($requested, $remaining));
                     $parameters['import_report'] = ['requested' => $requested, 'collected' => $added + $duplicates, 'added' => $added, 'duplicates' => $duplicates, 'rejected' => (int) ($previous['rejected'] ?? 0) + $outcome->rejected, 'total' => $added, 'completed_at' => null];
                     $nextJob = $job->fresh(['user']);
                     $nextJob->search_parameters = $parameters;
@@ -114,7 +115,7 @@ class PollScrapingJob implements ShouldQueue
     public function failed(\Throwable $e): void
     {
         DB::transaction(function () {
-            $query = ProspectingJob::query()->whereKey($this->jobId)->whereNotIn('status', ['ok', 'failed'])->lockForUpdate();
+            $query = ProspectingJob::query()->whereKey($this->jobId)->whereNotIn('status', ['ok', 'partial', 'failed', 'cancelled'])->lockForUpdate();
             if ($this->claimToken) $query->where('polling_claim_token', $this->claimToken); else $query->whereNull('polling_claim_token');
             $job = $query->first();
             if ($job) $job->update(['status' => 'unknown', 'error_message' => 'Falha ao consultar o scraper; reconciliação necessária.']);

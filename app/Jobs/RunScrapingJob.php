@@ -28,7 +28,7 @@ class RunScrapingJob implements ShouldQueue
             $current = ProspectingJob::query()->whereKey($this->jobId)->lockForUpdate()->first();
             $capacity = DB::table('scraper_capacity')->where('id', 1)->lockForUpdate()->first();
             $limit = max(1, (int) config('kaizen.apify.concurrency', 4));
-            if (!$current || !$capacity || $current->scraper_job_id || in_array($current->status, ['ok', 'failed'], true) || $current->scraper_slot_acquired || (!$this->forceSubmit && $capacity->used >= $limit)) return false;
+            if (!$current || !$capacity || $current->scraper_job_id || in_array($current->status, ['ok', 'partial', 'failed', 'cancelled'], true) || $current->scraper_slot_acquired || (!$this->forceSubmit && $capacity->used >= $limit)) return false;
             $slot = $capacity->used < $limit;
             if ($slot) DB::table('scraper_capacity')->where('id', 1)->update(['used' => $capacity->used + 1, 'updated_at' => now()]);
             $current->update(['scraper_slot_acquired' => $slot, 'status' => 'working', 'started_at' => $current->started_at ?: now(), 'progress' => 1, 'submission_intent_at' => now(), 'submission_attempt_token' => $attemptToken]);
@@ -53,14 +53,14 @@ class RunScrapingJob implements ShouldQueue
             $definitiveRejection = $e->getCode() >= 400 && $e->getCode() < 500;
             DB::transaction(function () use ($attemptToken, $attempt, $e, $definitiveRejection) {
                 $locked = ProspectingJob::query()->whereKey($this->jobId)->where('submission_attempt_token', $attemptToken)->lockForUpdate()->first();
-                if (!$locked || $locked->scraper_job_id || in_array($locked->status, ['ok', 'failed'], true)) return;
+                if (!$locked || $locked->scraper_job_id || in_array($locked->status, ['ok', 'partial', 'failed', 'cancelled'], true)) return;
                 if ($locked->scraper_slot_acquired && $definitiveRejection) {
                     $capacity = DB::table('scraper_capacity')->where('id', 1)->lockForUpdate()->first();
                     if ($capacity && $capacity->used > 0) DB::table('scraper_capacity')->where('id', 1)->update(['used' => $capacity->used - 1, 'updated_at' => now()]);
                 }
                 $locked->update([
                     'status' => $definitiveRejection ? 'failed' : 'unknown',
-                    'error_message' => $definitiveRejection ? $e->getMessage() : 'N�o foi poss�vel confirmar a cria��o na Apify. Reconcilia��o necess�ria.',
+                    'error_message' => $definitiveRejection ? $e->getMessage() : 'Não foi possível confirmar a criação na Apify. Reconciliação necessária.',
                     'scraper_slot_acquired' => $definitiveRejection ? false : (bool) $locked->scraper_slot_acquired,
                     'submission_intent_at' => null,
                     'submission_attempt_token' => null,
@@ -79,8 +79,8 @@ class RunScrapingJob implements ShouldQueue
     {
         DB::transaction(function () {
             $locked = ProspectingJob::query()->whereKey($this->jobId)->lockForUpdate()->first();
-            if (!$locked || $locked->scraper_job_id || in_array($locked->status, ['ok', 'failed'], true)) return;
-            $locked->update(['status' => 'unknown', 'error_message' => 'Falha durante submiss�o; estado externo incerto.']);
+            if (!$locked || $locked->scraper_job_id || in_array($locked->status, ['ok', 'partial', 'failed', 'cancelled'], true)) return;
+            $locked->update(['status' => 'unknown', 'error_message' => 'Falha durante submissão; estado externo incerto.']);
         });
         Log::error($e->getMessage(), ['job_id' => $this->jobId]);
     }

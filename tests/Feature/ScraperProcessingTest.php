@@ -44,6 +44,7 @@ class ScraperProcessingTest extends TestCase
   $job=$this->job(['search_parameters'=>['max_results'=>1]]); Http::fake(['*/api/v1/jobs/remote-1'=>Http::response(['Status'=>'ok','Progress'=>100]),'*/api/v1/jobs/remote-1/download'=>Http::response("title,place_id\nCafe,p1\n")]);
   (new PollScrapingJob($job->id))->handle(); (new PollScrapingJob($job->id))->handle();
   $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'ok','progress'=>100]); $this->assertSame(1,Lead::count());
+  $this->assertDatabaseHas('prospecting_job_candidates',['prospecting_job_id'=>$job->id,'external_place_id'=>'p1','disposition'=>'new']);
  }
  public function test_existing_leads_are_not_attached_to_a_repeated_search(): void {
   $job=$this->job();
@@ -52,11 +53,41 @@ class ScraperProcessingTest extends TestCase
   $outcome=app(ScraperClient::class)->import($job);
   $this->assertSame(1,$outcome->accepted); $this->assertSame(1,$outcome->updated);
   $this->assertCount(1,$job->fresh()->leads); $this->assertDatabaseHas('leads',['external_place_id'=>'p1','prospecting_job_id'=>null]);
+  $this->assertDatabaseHas('prospecting_job_candidates',['prospecting_job_id'=>$job->id,'external_place_id'=>'p1','disposition'=>'duplicate']);
+  $this->assertDatabaseHas('prospecting_job_candidates',['prospecting_job_id'=>$job->id,'external_place_id'=>'p2','disposition'=>'new']);
  }
  public function test_polling_marks_remote_failure(): void {
   $job=$this->job(); Http::fake(['*'=>Http::response(['Status'=>'failed'])]);
   (new PollScrapingJob($job->id))->handle();
   $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'failed']);
+ }
+ public function test_apify_refill_uses_accumulated_candidate_depth_after_duplicates(): void {
+  $job=$this->job(['scraper_job_id'=>'apify:run-1:dataset-1','search_parameters'=>['max_results'=>2,'location'=>'São Paulo, SP']]);
+  $job->user->update(['apify_api_token'=>'test-token']);
+  Lead::create(['user_id'=>$job->user_id,'name'=>'Existente','external_place_id'=>'existing','source'=>'manual']);
+  Http::fake(function ($request) {
+   if (str_contains($request->url(),'/actor-runs/run-1')) return Http::response(['data'=>['status'=>'SUCCEEDED']],200);
+   if (str_contains($request->url(),'/datasets/dataset-1/items')) return Http::response([['placeId'=>'existing','title'=>'Existente'],['placeId'=>'new-1','title'=>'Novo']],200);
+   if (str_contains($request->url(),'/acts/compass~crawler-google-places/runs')) { $this->assertSame(2,$request->data()['maxCrawledPlacesPerSearch']); return Http::response(['data'=>['id'=>'run-2','defaultDatasetId'=>'dataset-2']],201); }
+   return Http::response([],404);
+  });
+  (new PollScrapingJob($job->id))->handle();
+  $job->refresh();
+  $this->assertSame('working',$job->status); $this->assertSame('apify:run-2:dataset-2',$job->scraper_job_id);
+  $this->assertSame(2,$job->search_parameters['refill_max_results']);
+  $this->assertDatabaseHas('prospecting_job_candidates',['prospecting_job_id'=>$job->id,'external_place_id'=>'existing','disposition'=>'duplicate']);
+  $this->assertDatabaseHas('prospecting_job_candidates',['prospecting_job_id'=>$job->id,'external_place_id'=>'new-1','disposition'=>'new']);
+ }
+ public function test_apify_duplicate_only_run_finishes_partial_without_refill(): void {
+  $job=$this->job(['scraper_job_id'=>'apify:run-1:dataset-1','search_parameters'=>['max_results'=>2,'location'=>'São Paulo, SP']]);
+  $job->user->update(['apify_api_token'=>'test-token']);
+  Lead::create(['user_id'=>$job->user_id,'name'=>'Existente','external_place_id'=>'existing','source'=>'manual']);
+  Http::fake(['*/actor-runs/run-1'=>Http::response(['data'=>['status'=>'SUCCEEDED']],200),'*/datasets/dataset-1/items*'=>Http::response([['placeId'=>'existing','title'=>'Existente']],200)]);
+  (new PollScrapingJob($job->id))->handle();
+  $job->refresh();
+  $this->assertSame('partial',$job->status); $this->assertFalse($job->scraper_slot_acquired);
+  $this->assertSame('no_new_leads',$job->search_parameters['import_report']['partial_reason']);
+  Http::assertNotSent(fn($request)=>str_contains($request->url(),'/acts/compass~crawler-google-places/runs'));
  }
  public function test_failed_poll_preserves_capacity_when_external_state_is_unknown(): void {
   $job=$this->job(); (new PollScrapingJob($job->id))->failed(new \RuntimeException('timeout'));

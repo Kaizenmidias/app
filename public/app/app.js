@@ -225,12 +225,17 @@
 
   async function refreshJobs() {
     try {
-      const r = await apiFetch(API, { cache: "no-store" });
+      const endpoint = state.activeJobId ? `${API}/${state.activeJobId}` : API;
+      const r = await apiFetch(endpoint, { cache: "no-store" });
       if (!r.ok) throw new Error(r.status);
       const body = await r.text();
-      const list = body.trim() ? (JSON.parse(body) || []) : [];
+      const parsed = body.trim() ? (JSON.parse(body) || []) : [];
+      const list = Array.isArray(parsed) ? parsed : [parsed];
       setHealth(true);
-      state.jobs = list.map(norm).sort((a, b) => new Date(b.date) - new Date(a.date));
+      if (state.activeJobId) {
+        const current = list.map(norm)[0];
+        if (current) state.jobs = [current, ...state.jobs.filter((job) => job.id !== current.id)];
+      } else state.jobs = list.map(norm).sort((a, b) => new Date(b.date) - new Date(a.date));
       for (const j of state.jobs) {
         const prev = state.prevStatus[j.id];
         if (["ok", "partial"].includes(j.status) && state.counts[j.id] == null) state.counts[j.id] = j.report?.total ?? j.report?.added ?? null;
@@ -259,7 +264,7 @@
   // /#job=<id> opens that job directly (used by the Mapa ⇄ Painel switch).
   function openFromHash() {
     const m = location.hash.match(/job=([\w-]+)/);
-    const job = m && state.jobs.find((j) => j.id === m[1] && j.status === "ok");
+    const job = m && state.jobs.find((j) => j.id === m[1] && ["ok", "partial"].includes(j.status));
     if (job) openResults(job);
   }
 
@@ -294,15 +299,15 @@
       const meta = [
         `<span class="status ${esc(j.status)}">${esc(STATUS[j.status] || j.status)}</span>`,
         `<span class="dot">${esc(ago(j.date))}</span>`,
-        j.status === "ok" && count != null ? `<span class="dot">${esc(count)} lugares</span>` : "",
+        ["ok", "partial"].includes(j.status) && count != null ? `<span class="dot">${esc(count)} lugares</span>` : "",
         j.email ? `<span class="dot">com e-mails</span>` : "",
       ].join("");
-      return `<li class="job ${esc(j.status)}" data-id="${esc(j.id)}" ${j.status === "ok" ? 'tabindex="0" role="button" title="Ver resultados no mapa"' : ""}>
-        <span class="job-icon">${j.status === "ok" ? ICON.list : ICON.search}</span>
+      return `<li class="job ${esc(j.status)}" data-id="${esc(j.id)}" ${["ok", "partial"].includes(j.status) ? 'tabindex="0" role="button" title="Ver resultados no mapa"' : ""}>
+        <span class="job-icon">${["ok", "partial"].includes(j.status) ? ICON.list : ICON.search}</span>
         <div class="job-body">
           <div class="job-title">${esc(j.name || j.keywords.join(", "))}</div>
           <div class="job-meta">${meta}</div>
-          ${j.status === "ok" && j.report ? `<div class="job-report">Leads solicitados: ${esc(j.report.requested)} · Novos leads: ${esc(j.report.added)} · Duplicados: ${esc(j.report.duplicates)} · Resultado final: ${esc(j.report.total)} adicionados</div>` : ""}
+          ${["ok", "partial"].includes(j.status) && j.report ? `<div class="job-report">Leads solicitados: ${esc(j.report.requested)} · Novos leads: ${esc(j.report.added)} · Duplicados: ${esc(j.report.duplicates)} · Resultado final: ${esc(j.report.total)} adicionados</div>` : ""}
           ${j.status === "working" ? '<div class="progress" title="Coletando no Google Maps…"></div>' : ""}
         </div>
         <button class="job-del" data-act="delete" title="${j.status === "working" ? "Parar esta busca e apagá-la" : "Apagar esta busca e os resultados dela"}" aria-label="Apagar">${j.status === "working" ? ICON.stop : ICON.del}</button>
@@ -329,11 +334,11 @@
     const job = li && state.jobs.find((j) => String(j.id) === String(li.dataset.id));
     if (!job) return;
     if (e.target.closest("[data-act=delete]")) return deleteJob(job);
-    if (job.status === "ok") openResults(job);
+    if (["ok", "partial"].includes(job.status)) openResults(job);
   });
   $("#jobs").addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
-    const li = e.target.closest(".job.ok");
+    const li = e.target.closest(".job.ok, .job.partial");
     const job = li && state.jobs.find((j) => String(j.id) === String(li.dataset.id));
     if (job) openResults(job);
   });

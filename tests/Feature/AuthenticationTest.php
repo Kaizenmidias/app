@@ -27,7 +27,7 @@ class AuthenticationTest extends TestCase
 
         $response = $this->actingAs($user)->get('/dashboard');
         $response->assertOk();
-        $response->assertSee('Google Maps Scraper')->assertSee('href="/leads"', false);
+        $response->assertSee('Visão geral')->assertSee('href="'.url('/leads').'"', false);
     }
     public function test_password_reset_request_is_generic_for_unknown_email(): void
     {
