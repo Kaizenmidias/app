@@ -26,6 +26,12 @@ class ScraperProcessingTest extends TestCase
   $this->withHeader('X-CSRF-TOKEN',$token)->postJson('/api/prospecting/jobs',['keywords'=>['dentista'],'search_terms'=>['dentista'],'location'=>'São Paulo, SP','max_results'=>20,'lat'=>null,'lon'=>null,'max_time'=>180,'depth'=>1,'email'=>true])->assertStatus(202)->assertJsonPath('status','pending');
   Queue::assertPushed(\App\Jobs\RunScrapingJob::class);
  }
+ public function test_apify_payload_contains_search_and_location_fields(): void {
+  $u=User::factory()->create(['email_verified_at'=>now(),'apify_api_token'=>'test-token']);
+  $job=ProspectingJob::create(['user_id'=>$u->id,'keywords'=>['contabilidade'],'location'=>'São Paulo, SP','search_parameters'=>['location'=>'São Paulo, SP','max_results'=>20,'lang'=>'pt','email'=>true],'status'=>'pending']);
+  Http::fake(function ($request) { $this->assertStringContainsString('/acts/compass~crawler-google-places/runs', $request->url()); $body=$request->data(); $this->assertSame(['contabilidade'],$body['searchStringsArray']); $this->assertSame('São Paulo, SP',$body['locationQuery']); $this->assertSame(20,$body['maxCrawledPlacesPerSearch']); $this->assertSame('pt-BR',$body['language']); $this->assertTrue($body['scrapeContacts']); return Http::response(['data'=>['id'=>'run-1','defaultDatasetId'=>'dataset-1']],201); });
+  $this->assertSame('apify:run-1:dataset-1', app(ScraperClient::class)->create($job));
+ }
  private function job(array $extra=[]): ProspectingJob { $u=User::factory()->create(['email_verified_at'=>now()]); \DB::table('scraper_capacity')->update(['used'=>1]); return ProspectingJob::create(array_merge(['user_id'=>$u->id,'keywords'=>['cafe'],'latitude'=>1,'longitude'=>2,'status'=>'working','scraper_job_id'=>'remote-1','scraper_slot_acquired'=>true,'started_at'=>now()],$extra)); }
  public function test_polling_imports_completed_csv_idempotently(): void {
   $job=$this->job(['search_parameters'=>['max_results'=>1]]); Http::fake(['*/api/v1/jobs/remote-1'=>Http::response(['Status'=>'ok','Progress'=>100]),'*/api/v1/jobs/remote-1/download'=>Http::response("title,place_id\nCafe,p1\n")]);
