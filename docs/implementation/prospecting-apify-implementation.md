@@ -32,7 +32,7 @@ Checklist executivo derivado da auditoria de funcionamento da rota `/prospecting
 
 - [ ] Responder `202` após persistir o job, sem chamada externa síncrona.
 - [ ] Implementar estados `pending`, `submitting`, `running`, `importing`, `refilling`, `completed`, `partial`, `failed` e `cancelled`.
-- [ ] Registrar cada run Apify em uma tentativa própria.
+- [x] Registrar cada run Apify em uma tentativa própria (migration 000011 aplicada).
 - [ ] Implementar correlação e reconciliação de submissões ambíguas.
 - [ ] Implementar cancelamento real da run externa.
 
