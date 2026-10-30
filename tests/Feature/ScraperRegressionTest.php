@@ -124,6 +124,13 @@ Unknown,Somewhere
   (new PollScrapingJob($job->id))->handle();
   $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'cancel_requested','scraper_slot_acquired'=>1]);
  }
+ public function test_duplicate_submission_is_rejected_while_previous_job_is_active(): void {
+  $u=User::factory()->create(['email_verified_at'=>now(),'status'=>'active','apify_api_token'=>'test-token']); Queue::fake(); $this->actingAs($u)->get('/prospecting'); $token=session()->token();
+  $payload=['keywords'=>['dentista'],'search_terms'=>['dentista'],'location'=>'São Paulo, SP','max_results'=>20,'lat'=>null,'lon'=>null,'max_time'=>180,'depth'=>1,'email'=>true];
+  $this->withHeader('X-CSRF-TOKEN',$token)->postJson('/api/prospecting/jobs',$payload)->assertStatus(202);
+  $this->withHeader('X-CSRF-TOKEN',$token)->postJson('/api/prospecting/jobs',$payload)->assertStatus(409)->assertJsonPath('message','Essa busca já está em andamento.');
+  Queue::assertPushed(RunScrapingJob::class,1);
+ }
 }
 
 
