@@ -7,6 +7,12 @@
 @endpush
 
 @section('content')
+<div id="lead-context-menu" class="lead-context-menu" role="menu" hidden>
+    <button type="button" role="menuitem" data-menu-action="edit">Ver e editar</button>
+    <button type="button" role="menuitem" data-menu-action="funnel">Etapa do funil</button>
+    <button type="button" role="menuitem" data-menu-action="labels">Etiquetas</button>
+    <form method="post" data-menu-pipeline-form>@csrf<button type="submit" role="menuitem">Enviar para a pipeline</button></form>
+</div>
 <header class="module-header">
     <div><p class="module-eyebrow">CRM</p><h1>{{ $resultJob ? 'Resultado da busca' : 'Leads' }}</h1><p class="module-description">{{ $resultJob ? 'Leads encontrados em '.($resultJob->search_parameters['search_terms'][0] ?? $resultJob->keywords[0] ?? 'sua busca').'.' : 'Gerencie os contatos pertencentes à sua conta.' }}</p></div>
     <div class="module-actions"><span class="module-count">{{ $leads->total() }} {{ $leads->total() === 1 ? 'lead' : 'leads' }}</span><button type="button" class="lead-button lead-button-primary" data-dialog-open="new-lead">+ Novo lead</button></div>
@@ -46,7 +52,7 @@
                     <thead><tr><th><input type="checkbox" id="select-all" aria-label="Selecionar todos"></th><th>Nome</th><th><span class="email-heading">E-mail <button type="button" id="copy-emails" title="Copiar e-mails exibidos ou selecionados" aria-label="Copiar e-mails">⧉</button></span></th><th>WhatsApp</th><th>Site</th><th>Instagram</th><th>Lista</th><th>Capturado em</th><th><span class="sr-only">Ações</span></th></tr></thead>
                     <tbody>
                     @foreach($leads as $lead)
-                        <tr class="lead-row" data-dialog-open="lead-{{ $lead->id }}" tabindex="0">
+                        <tr class="lead-row" data-dialog-open="lead-{{ $lead->id }}" data-lead-dialog="lead-{{ $lead->id }}" data-label-dialog="label-{{ $lead->id }}" data-pipeline-url="{{ route('pipeline.send', $lead) }}" tabindex="0">
                             <td><input class="lead-select" type="checkbox" value="{{ $lead->id }}" aria-label="Selecionar {{ $lead->name }}"></td>
                             <td><strong>{{ $lead->name ?: 'Empresa sem nome' }}</strong>@if($lead->category)<small>{{ $lead->category }}</small>@endif</td>
                             <td class="lead-email" data-email="{{ $lead->email }}">{{ $lead->email ?: 'Não informado' }}</td>
@@ -57,7 +63,7 @@
                             <td>@if($lead->instagram)<a href="{{ $lead->instagram }}" target="_blank" rel="noopener">Abrir Instagram</a>@else Não informado @endif</td>
                             <td>{{ $lead->list?->name ?: 'Sem lista' }}</td>
                             <td>{{ optional($lead->created_at)->format('d/m/Y H:i') }}</td>
-                            <td class="lead-actions-cell"><details class="lead-menu"><summary aria-label="Ações do lead">•••</summary><div><button type="button" data-dialog-open="lead-{{ $lead->id }}">Ver e editar</button><button type="button" data-dialog-open="label-{{ $lead->id }}">Etiquetas</button><form method="post" action="{{ route('pipeline.send', $lead) }}">@csrf<button type="submit">Enviar para a pipeline</button></form></div></details></td>
+                            <td class="lead-actions-cell"><button type="button" class="lead-actions-trigger" data-lead-menu aria-label="Ações de {{ $lead->name }}" aria-haspopup="menu" aria-expanded="false">•••</button></td>
                         </tr>
                     @endforeach
                     </tbody>

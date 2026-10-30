@@ -4,7 +4,7 @@
   document.addEventListener('click', (event) => {
     const opener = event.target.closest('[data-dialog-open]');
     if (opener) {
-      if (event.target.closest('input, a, form, details') && opener.classList.contains('lead-row')) return;
+      if (event.target.closest('input, a, button, form, details') && opener.classList.contains('lead-row')) return;
       event.preventDefault();
       openDialog(opener.dataset.dialogOpen);
       return;
@@ -23,6 +23,55 @@
   document.querySelectorAll('dialog').forEach((dialog) => dialog.addEventListener('click', (event) => {
     if (event.target === dialog) dialog.close();
   }));
+
+  const contextMenu = document.getElementById('lead-context-menu');
+  const pipelineForm = contextMenu?.querySelector('[data-menu-pipeline-form]');
+  let menuRow = null;
+  const closeContextMenu = () => {
+    if (!contextMenu || contextMenu.hidden) return;
+    contextMenu.hidden = true;
+    document.querySelectorAll('[data-lead-menu][aria-expanded="true"]').forEach((button) => button.setAttribute('aria-expanded', 'false'));
+    menuRow = null;
+  };
+  const openContextMenu = (row, x, y, trigger = null) => {
+    if (!contextMenu || !row) return;
+    menuRow = row;
+    if (pipelineForm) pipelineForm.action = row.dataset.pipelineUrl;
+    contextMenu.hidden = false;
+    contextMenu.style.left = '0px';
+    contextMenu.style.top = '0px';
+    const width = contextMenu.offsetWidth;
+    const height = contextMenu.offsetHeight;
+    contextMenu.style.left = `${Math.max(8, Math.min(x, window.innerWidth - width - 8))}px`;
+    contextMenu.style.top = `${Math.max(8, Math.min(y, window.innerHeight - height - 8))}px`;
+    trigger?.setAttribute('aria-expanded', 'true');
+    contextMenu.querySelector('button')?.focus();
+  };
+
+  document.querySelectorAll('.lead-row').forEach((row) => row.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    openContextMenu(row, event.clientX, event.clientY);
+  }));
+  document.querySelectorAll('[data-lead-menu]').forEach((button) => button.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!contextMenu?.hidden && menuRow === button.closest('.lead-row')) return closeContextMenu();
+    const rect = button.getBoundingClientRect();
+    openContextMenu(button.closest('.lead-row'), rect.right - 220, rect.bottom + 6, button);
+  }));
+  contextMenu?.addEventListener('click', (event) => {
+    const action = event.target.closest('[data-menu-action]')?.dataset.menuAction;
+    if (!action || !menuRow) return;
+    event.preventDefault();
+    const dialogId = action === 'labels' ? menuRow.dataset.labelDialog : menuRow.dataset.leadDialog;
+    closeContextMenu();
+    openDialog(dialogId);
+    if (action === 'funnel') requestAnimationFrame(() => document.getElementById(dialogId)?.querySelector('.lead-stage-checklist')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+  });
+  document.addEventListener('click', (event) => { if (!event.target.closest('#lead-context-menu,[data-lead-menu]')) closeContextMenu(); });
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeContextMenu(); });
+  window.addEventListener('resize', closeContextMenu);
+  document.querySelector('.lead-table-wrap')?.addEventListener('scroll', closeContextMenu, { passive: true });
 
   const boxes = [...document.querySelectorAll('.lead-select')];
   const all = document.getElementById('select-all');

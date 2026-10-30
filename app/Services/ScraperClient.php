@@ -55,7 +55,7 @@ class ScraperClient
             $message = (string) $response->json('error.message', 'A Apify recusou a busca.');
             throw new RuntimeException('A Apify recusou a busca: '.$message, $response->status());
         }
-        if (!$response->json('data.id') || !$response->json('data.defaultDatasetId')) throw new RuntimeException('A Apify não retornou os identificadores da execução.');
+        if (!$response->json('data.id') || !$response->json('data.defaultDatasetId')) throw new RuntimeException('A Apify n�o retornou os identificadores da execu��o.');
         return 'apify:'.$response->json('data.id').':'.$response->json('data.defaultDatasetId');
     }
 
@@ -68,7 +68,7 @@ class ScraperClient
         }
         [, $run] = explode(':', $job->scraper_job_id, 3);
         $response = $this->apify($job)->get('/actor-runs/'.$run);
-        if ($response->failed()) throw new RuntimeException('Status da Apify indisponível.');
+        if ($response->failed()) throw new RuntimeException('Status da Apify indispon�vel.');
         $status = strtoupper((string) $response->json('data.status', 'RUNNING'));
         return ['status' => match ($status) { 'SUCCEEDED' => 'completed', 'FAILED', 'ABORTED', 'TIMED-OUT' => 'failed', default => 'working' }, 'progress' => $status === 'SUCCEEDED' ? 100 : 50];
     }
@@ -78,9 +78,9 @@ class ScraperClient
         if (!str_starts_with((string) $job->scraper_job_id, 'apify:')) return $this->importLegacy($job, $claimToken, $renewClaim);
         [, , $dataset] = explode(':', $job->scraper_job_id, 3);
         $response = $this->apify($job)->get('/datasets/'.$dataset.'/items', ['format' => 'json', 'clean' => 'true']);
-        if ($response->failed()) throw new RuntimeException('Resultados da Apify indisponíveis.');
+        if ($response->failed()) throw new RuntimeException('Resultados da Apify indispon�veis.');
         $items = $response->json();
-        if (!is_array($items)) throw new RuntimeException('Formato de resultado inválido na Apify.');
+        if (!is_array($items)) throw new RuntimeException('Formato de resultado inv�lido na Apify.');
         $rows = array_map(fn ($item) => [
             'place_id' => $item['placeId'] ?? $item['place_id'] ?? $item['cid'] ?? null,
             'title' => $item['title'] ?? $item['name'] ?? '',

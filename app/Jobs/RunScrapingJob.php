@@ -57,7 +57,7 @@ class RunScrapingJob implements ShouldQueue
                 }
                 $locked->update([
                     'status' => $definitiveRejection ? 'failed' : 'unknown',
-                    'error_message' => $definitiveRejection ? $e->getMessage() : 'Não foi possível confirmar a criação na Apify. Reconciliação necessária.',
+                    'error_message' => $definitiveRejection ? $e->getMessage() : 'N�o foi poss�vel confirmar a cria��o na Apify. Reconcilia��o necess�ria.',
                     'scraper_slot_acquired' => false,
                     'submission_intent_at' => null,
                     'submission_attempt_token' => null,
@@ -76,7 +76,7 @@ class RunScrapingJob implements ShouldQueue
         DB::transaction(function () {
             $locked = ProspectingJob::query()->whereKey($this->jobId)->lockForUpdate()->first();
             if (!$locked || $locked->scraper_job_id || in_array($locked->status, ['ok', 'failed'], true)) return;
-            $locked->update(['status' => 'unknown', 'error_message' => 'Falha durante submissão; estado externo incerto.']);
+            $locked->update(['status' => 'unknown', 'error_message' => 'Falha durante submiss�o; estado externo incerto.']);
         });
         Log::error($e->getMessage(), ['job_id' => $this->jobId]);
     }
