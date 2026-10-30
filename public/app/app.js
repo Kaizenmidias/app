@@ -5,7 +5,7 @@
 
   const API = "/api/v1/jobs";
   const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || decodeURIComponent((document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/)||[])[1]||"");
-  const apiFetch = async (url, options={}) => { const method = (options.method || "GET").toUpperCase(); let token = csrf(); if (method !== "GET") { const tokenResponse = await fetch(`${API}/csrf-token`, { credentials: "same-origin", cache: "no-store" }); if (tokenResponse.ok) { try { const payload = await tokenResponse.json(); token = payload.token || token; } catch {} } } return fetch(url, {credentials: "same-origin", ...options, headers: {...(options.headers||{}), ...(method !== "GET" ? {"X-CSRF-TOKEN": token} : {})}}); };
+  const apiFetch = async (url, options={}) => { const method = (options.method || "GET").toUpperCase(); let token = csrf(); if (method !== "GET") { try { const tokenResponse = await Promise.race([fetch(`${API}/csrf-token`, { credentials: "same-origin", cache: "no-store" }), new Promise((_, reject) => setTimeout(() => reject(new Error("csrf-timeout")), 2500))]); if (tokenResponse.ok) { try { const payload = await tokenResponse.json(); token = payload.token || token; } catch {} } } catch {} } return fetch(url, {credentials: "same-origin", ...options, headers: {...(options.headers||{}), ...(method !== "GET" ? {"X-CSRF-TOKEN": token} : {})}}); };
   const POLL_MS = 4000;
   const JOINER = { pt: "em", en: "in", es: "en" };   // "dentista em Barra Funda"
   const STATUS = { ok: "Concluída", working: "Pesquisando…", pending: "Na fila", failed: "Falhou" };
