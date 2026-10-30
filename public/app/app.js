@@ -46,7 +46,7 @@
 
   const state = {
     jobs: [], counts: {}, prevStatus: {}, current: null, activeJobId: null, rows: [], visible: [],
-    sort: { key: null, dir: 1 }, geo: null, submitting: false, depth: 5, email: false,
+    sort: { key: null, dir: 1 }, geo: null, submitting: false, depth: 1, email: false,
   };
 
   // ───────────────────────── utils ─────────────────────────
@@ -416,7 +416,7 @@
       const body = {
         name: `${terms.join(", ")} · ${place.split(",")[0].trim()}`,
         location: place,
-        keywords, search_terms: terms, lang, depth, email,
+        keywords, search_terms: terms, lang, depth, max_results: ({ 1: 20, 4: 50, 8: 100 }[depth] || 20), email,
         // lat/lon only bias the map viewport; the place is also in the keyword text,
         // so an un-geocodable place still works (the API just requires *some* coordinates).
         lat: g ? g.lat : "0", lon: g ? g.lon : "0",
@@ -701,7 +701,7 @@
   // ───────────────────────── boot ─────────────────────────
   const prefs = load("prefs", {});
   if (prefs.lang) $("#lang").value = prefs.lang;
-  setDepth(prefs.depth || 5);
+  setDepth(prefs.depth || 1);
   if (prefs.radius) $("#radius").value = prefs.radius;
   syncRadius(false);
   refreshJobs();
