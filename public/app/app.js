@@ -233,9 +233,9 @@
       state.jobs = list.map(norm).sort((a, b) => new Date(b.date) - new Date(a.date));
       for (const j of state.jobs) {
         const prev = state.prevStatus[j.id];
-        if (j.status === "ok" && state.counts[j.id] == null) fetchCount(j);
+        if (["ok", "partial"].includes(j.status) && state.counts[j.id] == null) state.counts[j.id] = j.report?.total ?? j.report?.added ?? null;
         if (j.id === state.activeJobId && (j.status === "pending" || j.status === "working")) setSearchProgress(j.status === "pending" ? "Busca iniciada. Preparando a coleta…" : "Busca em andamento. Coletando leads…");
-        if (prev && prev !== j.status && j.status === "ok") notifyDone(j);
+        if (prev && prev !== j.status && ["ok", "partial"].includes(j.status)) notifyDone(j);
         if (["ok", "partial"].includes(j.status) && j.id === state.activeJobId) { setSearchProgress(j.status === "partial" ? "Busca concluída parcialmente. Abrindo os resultados…" : "Busca concluída. Abrindo os resultados…", "complete"); openResults(j); state.activeJobId = null; }
         if (prev && prev !== j.status && ["failed", "partial"].includes(j.status)) toast(j.status === "partial" ? `A busca “${j.name}” foi concluída parcialmente.` : `A busca “${j.name}” falhou.`);
         if (["failed", "unknown", "cancel_requested"].includes(j.status) && j.id === state.activeJobId) { setSearchProgress("A busca não pôde ser concluída. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; }
@@ -278,8 +278,8 @@
   }
 
   async function notifyDone(j) {
-    try { toast(`“${j.name}” terminou: ${(await fetchRows(j.id)).length} resultados`, 6000); }
-    catch { toast(`“${j.name}” terminou`); }
+    const total = j.report?.total ?? j.report?.added;
+    toast(`“${j.name}” terminou${total != null ? `: ${total} novos leads` : ""}`, 6000);
   }
 
   function renderJobs() {
