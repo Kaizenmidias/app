@@ -59,6 +59,7 @@
     const loading = $("#search-loading");
     if (loading && message) {
       loading.hidden = false;
+      loading.removeAttribute("hidden");
       loading.style.display = "grid";
       loading.style.position = "fixed";
       loading.style.inset = "0";
@@ -69,7 +70,8 @@
     const el = $("#search-progress");
     if (!el) return;
     el.textContent = message || "";
-    el.hidden = !message;
+    // O andamento é exibido exclusivamente no overlay full-screen.
+    el.hidden = kind === "working" || !message;
     el.className = `search-progress${kind === "complete" ? " is-complete" : kind === "failed" ? " is-failed" : ""}`;
   }
   function store(k, v) { try { localStorage.setItem("ms:" + k, JSON.stringify(v)); } catch {} }
@@ -478,6 +480,7 @@
     history.replaceState(null, "", `#job=${job.id}`);
     $("#to-painel").href = `/painel#job=${job.id}`;
     $("#view-home").hidden = true; $("#view-results").hidden = false;
+    $("#view-results").classList.add("results-modal-open");
     $("#panel").scrollTop = 0;
     $("#results-title").textContent = job.name || "Resultados";
     $("#dash-title").textContent = job.name || "Painel";
@@ -513,7 +516,7 @@
     state.current = null; state.rows = []; state.visible = [];
     history.replaceState(null, "", location.pathname);
     $("#to-painel").href = "/painel";
-    $("#view-results").hidden = true; $("#view-home").hidden = false;
+    $("#view-results").hidden = true; $("#view-results").classList.remove("results-modal-open"); $("#view-home").hidden = false;
     $("#dash").hidden = true;
     if (hasMap) { markerLayer.clearLayers(); drawArea(); if (state.geo) showLookup(state.geo); }
   }
