@@ -47,8 +47,8 @@ Checklist executivo derivado da auditoria de funcionamento da rota `/prospecting
 ## Fase 4 — reposição controlada
 
 - [ ] Buscar profundidade acumulada, não apenas a quantidade restante.
-- [ ] Definir limite de candidatos, tentativas, duração e custo.
-- [ ] Parar após tentativas sem novos leads.
+- [x] Definir limite de candidatos e tentativas, respeitando duracao maxima configurada.
+- [x] Parar apos tentativa sem novos leads.
 - [x] Finalizar como parcial quando a oferta disponível acabar.
 - [ ] Não prometer 20/50/100 quando o provider não tiver leads suficientes.
 
