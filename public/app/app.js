@@ -57,7 +57,15 @@
   }
   function setSearchProgress(message, kind = "working") {
     const loading = $("#search-loading");
-    if (loading && message) { loading.hidden = kind !== "working"; const text = $("#search-loading-message"); if (text) text.textContent = message; }
+    if (loading && message) {
+      loading.hidden = false;
+      loading.style.display = "grid";
+      loading.style.position = "fixed";
+      loading.style.inset = "0";
+      loading.style.zIndex = "99999";
+      const text = $("#search-loading-message"); if (text) text.textContent = message;
+      if (kind === "complete") setTimeout(() => { loading.hidden = true; loading.style.display = "none"; }, 250);
+    }
     const el = $("#search-progress");
     if (!el) return;
     el.textContent = message || "";
@@ -442,8 +450,9 @@
       refreshJobs();
     } catch (err) {
       showError(err.message || "Não consegui criar a busca. O scraper está online?");
-      setSearchProgress("");
-      const loading = $("#search-loading"); if (loading) loading.hidden = true;
+      setSearchProgress("A busca falhou. Verifique a mensagem e tente novamente.", "failed");
+      const loading = $("#search-loading");
+      if (loading) setTimeout(() => { loading.hidden = true; loading.style.display = "none"; }, 1200);
     } finally {
       state.submitting = false; btn.disabled = false;
       btn.querySelector(".btn-label").textContent = "Pesquisar";
