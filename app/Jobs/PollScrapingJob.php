@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\ProspectingJob;
+use App\Models\{ProspectingJob, ProspectingJobAttempt};
 use App\Services\ScraperClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,6 +37,8 @@ class PollScrapingJob implements ShouldQueue
             if ($claimed !== 1) return;
             $remote = app(ScraperClient::class)->status($job);
             $status = strtolower((string) ($remote['Status'] ?? $remote['status'] ?? 'working'));
+            $attempt = ProspectingJobAttempt::query()->where('prospecting_job_id', $job->id)->where('external_id', $job->scraper_job_id)->latest()->first();
+            if ($attempt) $attempt->update(['status' => in_array($status, ['ok', 'done', 'completed'], true) ? 'succeeded' : (in_array($status, ['failed', 'error'], true) ? 'failed' : 'running'), 'finished_at' => in_array($status, ['ok', 'done', 'completed', 'failed', 'error'], true) ? now() : null]);
             $progress = (int) ($remote['Progress'] ?? $remote['progress'] ?? $job->progress);
             if (ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['progress' => min(100, max(0, $progress)), 'updated_at' => now()->addSecond()]) !== 1) return;
             if (in_array($status, ['ok', 'done', 'completed'], true)) {
@@ -47,6 +49,7 @@ class PollScrapingJob implements ShouldQueue
                 };
                 $outcome = app(ScraperClient::class)->import($job, $claimToken, $renew);
                 if (!$outcome->complete || $outcome->ownershipLost) {
+                    if ($attempt) $attempt->update(['status' => 'unknown', 'error_message' => 'Importacao incompleta; reconciliacao necessaria.']);
                     ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['status' => 'unknown', 'error_message' => 'Importação incompleta; reconciliação necessária.']);
                     return;
                 }
