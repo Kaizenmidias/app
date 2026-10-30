@@ -34,7 +34,7 @@ Checklist executivo derivado da auditoria de funcionamento da rota `/prospecting
 - [x] Implementar estados operacionais `pending`, `working`, `importing`, `refilling`, `partial` e `failed`.
 - [x] Registrar cada run Apify em uma tentativa própria (migration 000011 aplicada).
 - [ ] Implementar correlação e reconciliação de submissões ambíguas.
-- [ ] Implementar cancelamento real da run externa.
+- [x] Implementar cancelamento real da run externa.
 
 ## Fase 3 — importação e deduplicação
 
