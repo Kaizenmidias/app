@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Parceiros Kaizen Laravel scheduler every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+Persistent=true
+Unit=kaizen-partners-schedule.service
+
+[Install]
+WantedBy=timers.target

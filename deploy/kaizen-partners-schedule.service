@@ -1,0 +1,10 @@
+[Unit]
+Description=Parceiros Kaizen Laravel scheduler
+After=network.target
+
+[Service]
+Type=oneshot
+User=kaizen-deploy
+Group=www
+WorkingDirectory=/www/wwwroot/app.kaizenmidias.com/current
+ExecStart=/usr/bin/php /www/wwwroot/app.kaizenmidias.com/current/artisan schedule:run --no-ansi
