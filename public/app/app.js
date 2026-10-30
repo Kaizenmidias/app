@@ -450,6 +450,13 @@
     }
   });
 
+  // Exibe o estado de carregamento no instante do clique, antes de qualquer
+  // geocodificação ou requisição de rede. Isso também funciona se o markup
+  // antigo ainda estiver em cache no navegador.
+  $("#submit").addEventListener("pointerdown", () => {
+    if (!state.submitting) setSearchProgress("Buscando Leads...");
+  });
+
   // ───────────────────────── results ─────────────────────────
   function insideShare(job, rows) {
     const located = rows.filter((r) => +r.latitude);
