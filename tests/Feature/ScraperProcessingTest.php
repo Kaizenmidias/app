@@ -23,7 +23,7 @@ class ScraperProcessingTest extends TestCase
  }
  public function test_valid_prospecting_submission_is_queued_and_returns_accepted(): void {
   $u=User::factory()->create(['email_verified_at'=>now(),'status'=>'active','apify_api_token'=>'test-token']); Queue::fake(); $this->actingAs($u)->get('/prospecting'); $token=session()->token();
-  $this->withHeader('X-CSRF-TOKEN',$token)->postJson('/api/v1/jobs',['keywords'=>['dentista'],'search_terms'=>['dentista'],'location'=>'São Paulo, SP','max_results'=>20,'lat'=>null,'lon'=>null,'max_time'=>180,'depth'=>1,'email'=>true])->assertStatus(202)->assertJsonPath('status','pending');
+  $this->withHeader('X-CSRF-TOKEN',$token)->postJson('/api/prospecting/jobs',['keywords'=>['dentista'],'search_terms'=>['dentista'],'location'=>'São Paulo, SP','max_results'=>20,'lat'=>null,'lon'=>null,'max_time'=>180,'depth'=>1,'email'=>true])->assertStatus(202)->assertJsonPath('status','pending');
   Queue::assertPushed(\App\Jobs\RunScrapingJob::class);
  }
  private function job(array $extra=[]): ProspectingJob { $u=User::factory()->create(['email_verified_at'=>now()]); \DB::table('scraper_capacity')->update(['used'=>1]); return ProspectingJob::create(array_merge(['user_id'=>$u->id,'keywords'=>['cafe'],'latitude'=>1,'longitude'=>2,'status'=>'working','scraper_job_id'=>'remote-1','scraper_slot_acquired'=>true,'started_at'=>now()],$extra)); }
