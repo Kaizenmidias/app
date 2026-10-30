@@ -65,7 +65,10 @@ class PollScrapingJob implements ShouldQueue
                 $duplicates = (int) ($previous['duplicates'] ?? 0) + $outcome->updated;
                 $attempts = (int) ($parameters['refill_attempts'] ?? 0);
                 $remaining = max(0, $requested - $added);
-                if (str_starts_with((string) $job->scraper_job_id, 'apify:') && $remaining > 0 && $attempts < 3) {
+                $noProgress = $outcome->accepted === 0;
+                $candidateLimit = max($requested, $requested * 3);
+                $candidateTotal = $added + $duplicates;
+                if (str_starts_with((string) $job->scraper_job_id, 'apify:') && $remaining > 0 && !$noProgress && $candidateTotal < $candidateLimit && $attempts < 3) {
                     ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['status' => 'refilling', 'updated_at' => now()]);
                     $parameters['refill_attempts'] = $attempts + 1;
                     $parameters['refill_max_results'] = min($requested, $remaining);
@@ -80,7 +83,7 @@ class PollScrapingJob implements ShouldQueue
                     return;
                 }
                 unset($parameters['refill_max_results'], $parameters['refill_attempts']);
-                $parameters['import_report'] = ['requested' => $requested, 'collected' => $added + $duplicates, 'added' => $added, 'duplicates' => $duplicates, 'rejected' => (int) ($previous['rejected'] ?? 0) + $outcome->rejected, 'total' => $added, 'completed_at' => now()->toIso8601String()];
+                $parameters['import_report'] = ['requested' => $requested, 'collected' => $added + $duplicates, 'added' => $added, 'duplicates' => $duplicates, 'rejected' => (int) ($previous['rejected'] ?? 0) + $outcome->rejected, 'total' => $added, 'partial_reason' => $remaining > 0 ? ($noProgress ? 'no_new_leads' : 'provider_limit') : null, 'completed_at' => now()->toIso8601String()];
                 ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['search_parameters' => $parameters]);
                 $this->finish($job, $remaining > 0 ? 'partial' : 'ok', $remaining > 0 ? 'O provedor nao retornou novos leads suficientes.' : null, $claimToken);
                 return;
