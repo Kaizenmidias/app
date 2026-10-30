@@ -423,7 +423,12 @@
     setSearchProgress("Busca iniciada. Preparando a coleta…");
     const btn = $("#submit"); btn.disabled = true; btn.querySelector(".btn-label").textContent = "Enviando…";
     try {
-      const g = state.geo || await checkLocation();
+      // A geocodificação só serve para posicionar o mapa; nunca deve bloquear
+      // o envio da busca para a Apify.
+      const g = state.geo || await Promise.race([
+        checkLocation(),
+        new Promise((resolve) => setTimeout(() => resolve(null), 3500)),
+      ]);
       const autoSecs = Math.min(1200, Math.max(180, terms.length * (90 + depth * 25) * (email ? 2 : 1)));
       const maxMin = +$("#maxtime").value;
       const body = {
