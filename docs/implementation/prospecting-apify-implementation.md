@@ -75,6 +75,8 @@ Checklist executivo derivado da auditoria de funcionamento da rota `/prospecting
 - [ ] Smoke test real autorizado e limitado.
 - [x] Deploy incremental com rollback documentado (release ca87cbb ativada apos smoke test).
 
+Evidencia operacional adicional: timer systemd `kaizen-partners-schedule.timer` ativo em producao; execucao manual de `scraper:reconcile` concluida sem erro em 30/10/2026.
+
 ## Evidência
 
 Os itens marcados como concluídos nesta primeira versão representam apenas auditoria e inspeção. Nenhuma correção funcional deste checklist é considerada implementada até possuir teste correspondente e registro de publicação.
