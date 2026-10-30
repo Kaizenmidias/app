@@ -32,6 +32,13 @@ class ScraperProcessingTest extends TestCase
   Http::fake(function ($request) { $this->assertStringContainsString('/acts/compass~crawler-google-places/runs', $request->url()); $body=$request->data(); $this->assertSame(['contabilidade'],$body['searchStringsArray']); $this->assertSame('São Paulo, SP',$body['locationQuery']); $this->assertSame(20,$body['maxCrawledPlacesPerSearch']); $this->assertSame('pt-BR',$body['language']); $this->assertTrue($body['scrapeContacts']); return Http::response(['data'=>['id'=>'run-1','defaultDatasetId'=>'dataset-1']],201); });
   $this->assertSame('apify:run-1:dataset-1', app(ScraperClient::class)->create($job));
  }
+ public function test_cancel_requested_run_is_cancelled_at_apify(): void {
+  $u=User::factory()->create(['email_verified_at'=>now(),'apify_api_token'=>'test-token']); $job=$this->job(['user_id'=>$u->id,'scraper_job_id'=>'apify:run-9:dataset-9','status'=>'cancel_requested']);
+  Http::fake(['*/actor-runs/run-9'=>Http::response([],204)]);
+  (new \App\Jobs\PollScrapingJob($job->id))->handle();
+  Http::assertSent(fn($request)=>$request->method()==='DELETE' && str_ends_with($request->url(),'/actor-runs/run-9'));
+  $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'cancelled']);
+ }
  private function job(array $extra=[]): ProspectingJob { $u=User::factory()->create(['email_verified_at'=>now()]); \DB::table('scraper_capacity')->update(['used'=>1]); return ProspectingJob::create(array_merge(['user_id'=>$u->id,'keywords'=>['cafe'],'latitude'=>1,'longitude'=>2,'status'=>'working','scraper_job_id'=>'remote-1','scraper_slot_acquired'=>true,'started_at'=>now()],$extra)); }
  public function test_polling_imports_completed_csv_idempotently(): void {
   $job=$this->job(['search_parameters'=>['max_results'=>1]]); Http::fake(['*/api/v1/jobs/remote-1'=>Http::response(['Status'=>'ok','Progress'=>100]),'*/api/v1/jobs/remote-1/download'=>Http::response("title,place_id\nCafe,p1\n")]);

@@ -71,6 +71,14 @@ class ScraperClient
         return ['status' => match ($status) { 'SUCCEEDED', 'ABORTED' => 'completed', 'FAILED', 'TIMED-OUT' => 'failed', default => 'working' }, 'progress' => in_array($status, ['SUCCEEDED', 'ABORTED'], true) ? 100 : 50];
     }
 
+    public function cancel(ProspectingJob $job): bool
+    {
+        if (!str_starts_with((string) $job->scraper_job_id, 'apify:')) return false;
+        [, $run] = explode(':', $job->scraper_job_id, 3);
+        $response = $this->apify($job)->delete('/actor-runs/'.$run);
+        return $response->successful() || $response->status() === 404;
+    }
+
     public function import(ProspectingJob $job, ?string $claimToken = null, ?callable $renewClaim = null): ScraperImportOutcome
     {
         if (!str_starts_with((string) $job->scraper_job_id, 'apify:')) return $this->importLegacy($job, $claimToken, $renewClaim);

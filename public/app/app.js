@@ -8,7 +8,7 @@
   const apiFetch = async (url, options={}) => { const method = (options.method || "GET").toUpperCase(); let token = csrf(); if (method !== "GET") { try { const tokenResponse = await Promise.race([fetch(`${API}/csrf-token`, { credentials: "same-origin", cache: "no-store" }), new Promise((_, reject) => setTimeout(() => reject(new Error("csrf-timeout")), 2500))]); if (tokenResponse.ok) { try { const payload = await tokenResponse.json(); token = payload.token || token; } catch {} } } catch {} } return fetch(url, {credentials: "same-origin", ...options, headers: {...(options.headers||{}), ...(method !== "GET" ? {"X-CSRF-TOKEN": token} : {})}}); };
   const POLL_MS = 4000;
   const JOINER = { pt: "em", en: "in", es: "en" };   // "dentista em Barra Funda"
-  const STATUS = { ok: "Concluída", partial: "Parcial", importing: "Importando", refilling: "Buscando mais", working: "Pesquisando…", pending: "Na fila", failed: "Falhou", unknown: "Aguardando reconciliação" };
+  const STATUS = { ok: "Concluída", partial: "Parcial", importing: "Importando", refilling: "Buscando mais", working: "Pesquisando…", pending: "Na fila", failed: "Falhou", cancelled: "Cancelada", unknown: "Aguardando reconciliação" };
   const AMOUNT_HINT = {
     1: "Aproximado — leva ~2 min",
     4: "Aproximado — leva ~3 min",
@@ -238,7 +238,7 @@
         if (prev && prev !== j.status && ["ok", "partial"].includes(j.status)) notifyDone(j);
         if (["ok", "partial"].includes(j.status) && j.id === state.activeJobId) { setSearchProgress(j.status === "partial" ? "Busca concluída parcialmente. Abrindo os resultados…" : "Busca concluída. Abrindo os resultados…", "complete"); openResults(j); state.activeJobId = null; }
         if (prev && prev !== j.status && ["failed", "partial"].includes(j.status)) toast(j.status === "partial" ? `A busca “${j.name}” foi concluída parcialmente.` : `A busca “${j.name}” falhou.`);
-        if (["failed", "unknown", "cancel_requested"].includes(j.status) && j.id === state.activeJobId) { setSearchProgress("A busca não pôde ser concluída. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; }
+        if (["failed", "unknown", "cancel_requested", "cancelled"].includes(j.status) && j.id === state.activeJobId) { setSearchProgress(j.status === "cancelled" ? "Busca cancelada." : "A busca não pôde ser concluída. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; }
         state.prevStatus[j.id] = j.status;
       }
       // Compatibilidade com respostas legadas que retornam o ID numérico em

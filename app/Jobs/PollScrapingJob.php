@@ -35,6 +35,10 @@ class PollScrapingJob implements ShouldQueue
                 $query->whereNull('polling_claimed_at')->orWhere('polling_claimed_at', '<', now()->subMinutes(10));
             })->update(['polling_claimed_at' => now(), 'polling_claim_token' => $claimToken]);
             if ($claimed !== 1) return;
+            if ($job->status === 'cancel_requested') {
+                $cancelled = app(ScraperClient::class)->cancel($job);
+                if ($cancelled) { $this->finish($job, 'cancelled', 'Busca cancelada pelo usuario.', $claimToken); return; }
+            }
             $remote = app(ScraperClient::class)->status($job);
             $status = strtolower((string) ($remote['Status'] ?? $remote['status'] ?? 'working'));
             $attempt = ProspectingJobAttempt::query()->where('prospecting_job_id', $job->id)->where('external_id', $job->scraper_job_id)->latest()->first();
