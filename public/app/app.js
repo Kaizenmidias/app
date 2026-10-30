@@ -61,6 +61,8 @@
     el.textContent = message || "";
     el.hidden = !message;
     el.className = `search-progress${kind === "complete" ? " is-complete" : kind === "failed" ? " is-failed" : ""}`;
+    const loading = $("#search-loading");
+    if (loading && message) { loading.hidden = kind !== "working"; const text = $("#search-loading-message"); if (text) text.textContent = message; }
   }
   function store(k, v) { try { localStorage.setItem("ms:" + k, JSON.stringify(v)); } catch {} }
   function load(k, d) { try { const v = localStorage.getItem("ms:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } }
@@ -408,6 +410,7 @@
     if (dup && !confirm("Essa mesma busca já está rodando ou na fila. Criar outra igual mesmo assim?")) return;
 
     state.submitting = true;
+    setSearchProgress("Busca iniciada. Preparando a coleta…");
     const btn = $("#submit"); btn.disabled = true; btn.querySelector(".btn-label").textContent = "Enviando…";
     try {
       const g = state.geo || await checkLocation();
@@ -439,6 +442,8 @@
       refreshJobs();
     } catch (err) {
       showError(err.message || "Não consegui criar a busca. O scraper está online?");
+      setSearchProgress("");
+      const loading = $("#search-loading"); if (loading) loading.hidden = true;
     } finally {
       state.submitting = false; btn.disabled = false;
       btn.querySelector(".btn-label").textContent = "Pesquisar";
