@@ -57,7 +57,7 @@
   }
   function setSearchProgress(message, kind = "working") {
     const loading = $("#search-loading");
-    if (loading && message) {
+    if (loading && message && kind === "working") {
       loading.hidden = false;
       loading.removeAttribute("hidden");
       loading.style.display = "grid";
@@ -65,7 +65,9 @@
       loading.style.inset = "0";
       loading.style.zIndex = "99999";
       const text = $("#search-loading-message"); if (text) text.textContent = message;
-      if (kind === "complete") setTimeout(() => { loading.hidden = true; loading.style.display = "none"; }, 250);
+    } else if (loading && (kind === "complete" || kind === "failed")) {
+      loading.hidden = true;
+      loading.style.display = "none";
     }
     const el = $("#search-progress");
     if (!el) return;
@@ -236,7 +238,7 @@
         if (prev && prev !== j.status && j.status === "ok") notifyDone(j);
         if (j.status === "ok" && j.id === state.activeJobId) { setSearchProgress("Busca concluída. Abrindo os resultados…", "complete"); openResults(j); state.activeJobId = null; }
         if (prev && prev !== j.status && j.status === "failed") toast(`A busca “${j.name}” falhou.`);
-        if (j.status === "failed" && j.id === state.activeJobId) { setSearchProgress("A busca falhou. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; }
+        if (["failed", "unknown", "cancel_requested"].includes(j.status) && j.id === state.activeJobId) { setSearchProgress("A busca não pôde ser concluída. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; }
         state.prevStatus[j.id] = j.status;
       }
       // Compatibilidade com respostas legadas que retornam o ID numérico em
@@ -244,6 +246,7 @@
       if (state.activeJobId && !state.jobs.some((j) => j.id === state.activeJobId && (j.status === "pending" || j.status === "working"))) {
         const failed = state.jobs.find((j) => j.status === "failed");
         if (failed) { setSearchProgress("A busca falhou. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; }
+        else if (state.jobs.some((j) => j.id === state.activeJobId && ["unknown", "cancel_requested"].includes(j.status))) { setSearchProgress("A busca não pôde ser concluída. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; }
       }
       renderJobs();
       if (!state.booted) { state.booted = true; openFromHash(); }
@@ -421,7 +424,7 @@
     if (!place) { $("#location").focus(); return showError("Diga onde procurar. Ex.: Barra Funda, São Paulo."); }
 
     const lang = $("#lang").value, depth = state.depth, email = true;
-    const keywords = terms.map((t) => `${t} ${JOINER[lang] || "em"} ${place}`);
+      const keywords = [terms[0]];
     const dup = state.jobs.find((j) => (j.status === "pending" || j.status === "working") && j.keywords.join("|") === keywords.join("|"));
     if (dup && !confirm("Essa mesma busca já está rodando ou na fila. Criar outra igual mesmo assim?")) return;
 
@@ -438,12 +441,12 @@
       const autoSecs = Math.min(1200, Math.max(180, terms.length * (90 + depth * 25) * (email ? 2 : 1)));
       const maxMin = +$("#maxtime").value;
       const body = {
-        name: `${terms.join(", ")} · ${place.split(",")[0].trim()}`,
+        name: `${terms[0]} · ${place.split(",")[0].trim()}`,
         location: place,
         keywords, search_terms: terms, lang, depth, max_results: ({ 1: 20, 4: 50, 8: 100 }[depth] || 20), email,
         // lat/lon only bias the map viewport; the place is also in the keyword text,
         // so an un-geocodable place still works (the API just requires *some* coordinates).
-        lat: g ? g.lat : "0", lon: g ? g.lon : "0",
+        lat: g ? g.lat : null, lon: g ? g.lon : null,
         zoom: g ? zoomFor(radiusMeters(), +g.lat) : 14, radius: radiusMeters(),
         fast_mode: false, max_time: maxMin ? maxMin * 60 : autoSecs,
         lead_list_id: $("#lead_list_id")?.value || null,
@@ -470,19 +473,6 @@
       state.submitting = false; btn.disabled = false;
       btn.querySelector(".btn-label").textContent = "Pesquisar";
     }
-  });
-
-  // Exibe o estado de carregamento no instante do clique, antes de qualquer
-  // geocodificação ou requisição de rede. Isso também funciona se o markup
-  // antigo ainda estiver em cache no navegador.
-  $("#submit").addEventListener("pointerdown", () => {
-    if (!state.submitting) setSearchProgress("Buscando Leads...");
-  });
-  // Impede o submit nativo (que apenas recarrega a página/GET /jobs) e força
-  // o fluxo assíncrono que valida os campos e envia POST /api/v1/jobs.
-  $("#submit").addEventListener("click", (e) => {
-    e.preventDefault();
-    $("#search-form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   });
 
   // ───────────────────────── results ─────────────────────────

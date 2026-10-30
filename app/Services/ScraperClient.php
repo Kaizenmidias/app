@@ -22,11 +22,7 @@ class ScraperClient
 
     public function create(ProspectingJob $job): string
     {
-        if (!$job->user?->apify_api_token) {
-            $response = $this->legacyHttp()->post('/api/v1/jobs', array_merge($job->search_parameters ?? [], ['name' => 'kaizen-'.$job->id, 'keywords' => $job->keywords, 'lat' => (string) $job->latitude, 'lon' => (string) $job->longitude]));
-            if ($response->failed() || !$response->json('id')) throw new RuntimeException('Scraper rejected the job.');
-            return $response->json('id');
-        }
+        if (!$job->user?->apify_api_token) throw new RuntimeException('Configure seu token da Apify em Minha conta antes de iniciar uma busca.', 422);
         $params = $job->search_parameters ?? [];
         $max = (int) ($params['refill_max_results'] ?? $params['max_results'] ?? match ((int) ($params['depth'] ?? 5)) { 1 => 20, 4 => 50, 8 => 100, default => 50 });
         $terms = array_values(array_filter(array_map('strval', (array) $job->keywords), fn ($value) => trim($value) !== ''));

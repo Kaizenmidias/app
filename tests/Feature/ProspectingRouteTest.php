@@ -16,7 +16,7 @@ class ProspectingRouteTest extends TestCase
             ->assertSee('id="jobs"', false);
     }
     public function test_authenticated_user_receives_original_panel(): void { $user=User::factory()->create(['email_verified_at'=>now(),'status'=>'active']); $response=$this->actingAs($user)->get('/painel'); $response->assertOk()->assertSee('href="/leads"', false)->assertSee('href="/pipeline"', false); }
-    public function test_dashboard_and_panel_render_the_same_protected_view(): void { $user=User::factory()->create(['email_verified_at'=>now(),'status'=>'active']); $dashboard=$this->actingAs($user)->get('/dashboard'); $panel=$this->actingAs($user)->get('/painel'); $dashboard->assertOk()->assertSee('scraper-shell-sidebar')->assertSee('id="search-form"', false); $panel->assertOk()->assertSee('scraper-shell-sidebar')->assertSee('id="search-form"', false); }
+    public function test_dashboard_and_panel_render_protected_views(): void { $user=User::factory()->create(['email_verified_at'=>now(),'status'=>'active']); $dashboard=$this->actingAs($user)->get('/dashboard'); $panel=$this->actingAs($user)->get('/painel'); $dashboard->assertOk()->assertSee('scraper-shell-sidebar')->assertSee('Atividade comercial'); $panel->assertOk()->assertSee('id="search-form"', false)->assertSee('id="jobs"', false); }
     public function test_scraper_credits_are_removed_from_runtime_interfaces(): void {
         $panel = file_get_contents(resource_path('views/panel.blade.php'));
         $prospecting = file_get_contents(resource_path('views/prospecting.html'));

@@ -5,6 +5,7 @@ use App\Models\{ProspectingJob,User,Lead};
 use App\Services\ScraperClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 class ScraperProcessingTest extends TestCase
 {
@@ -19,6 +20,11 @@ class ScraperProcessingTest extends TestCase
   $page=$this->actingAs($u)->get('/prospecting')->assertOk();
   $this->assertStringContainsString('meta name="csrf-token"', $page->getContent());
   $this->assertStringContainsString(session()->token(), $page->getContent());
+ }
+ public function test_valid_prospecting_submission_is_queued_and_returns_accepted(): void {
+  $u=User::factory()->create(['email_verified_at'=>now(),'status'=>'active','apify_api_token'=>'test-token']); Queue::fake(); $this->actingAs($u)->get('/prospecting'); $token=session()->token();
+  $this->withHeader('X-CSRF-TOKEN',$token)->postJson('/api/v1/jobs',['keywords'=>['dentista'],'search_terms'=>['dentista'],'location'=>'São Paulo, SP','max_results'=>20,'lat'=>null,'lon'=>null,'max_time'=>180,'depth'=>1,'email'=>true])->assertStatus(202)->assertJsonPath('status','pending');
+  Queue::assertPushed(\App\Jobs\RunScrapingJob::class);
  }
  private function job(array $extra=[]): ProspectingJob { $u=User::factory()->create(['email_verified_at'=>now()]); \DB::table('scraper_capacity')->update(['used'=>1]); return ProspectingJob::create(array_merge(['user_id'=>$u->id,'keywords'=>['cafe'],'latitude'=>1,'longitude'=>2,'status'=>'working','scraper_job_id'=>'remote-1','scraper_slot_acquired'=>true,'started_at'=>now()],$extra)); }
  public function test_polling_imports_completed_csv_idempotently(): void {
@@ -57,7 +63,7 @@ class ScraperProcessingTest extends TestCase
  }
 
  public function test_submission_failure_keeps_capacity_and_marks_unknown(): void {
-  $u=User::factory()->create(['email_verified_at'=>now()]); $job=ProspectingJob::create(['user_id'=>$u->id,'keywords'=>['cafe'],'latitude'=>1,'longitude'=>2,'status'=>'pending']);
+  $u=User::factory()->create(['email_verified_at'=>now(),'apify_api_token'=>'test-token']); $job=ProspectingJob::create(['user_id'=>$u->id,'keywords'=>['cafe'],'latitude'=>1,'longitude'=>2,'status'=>'pending']);
   Http::fake(fn()=>throw new \RuntimeException('ambiguous timeout'));
   (new \App\Jobs\RunScrapingJob($job->id))->handle();
   $this->assertDatabaseHas('prospecting_jobs',['id'=>$job->id,'status'=>'unknown','scraper_slot_acquired'=>1,'scraper_job_id'=>null]);

@@ -19,7 +19,7 @@ class RunScrapingJob implements ShouldQueue
     public $timeout = 75;
     public $backoff = [30, 120, 300];
 
-    public function __construct(public int $jobId, public bool $forceSubmit = true) {}
+    public function __construct(public int $jobId, public bool $forceSubmit = false) {}
 
     public function handle(): void
     {
@@ -52,14 +52,14 @@ class RunScrapingJob implements ShouldQueue
             DB::transaction(function () use ($attemptToken, $e, $definitiveRejection) {
                 $locked = ProspectingJob::query()->whereKey($this->jobId)->where('submission_attempt_token', $attemptToken)->lockForUpdate()->first();
                 if (!$locked || $locked->scraper_job_id || in_array($locked->status, ['ok', 'failed'], true)) return;
-                if ($locked->scraper_slot_acquired) {
+                if ($locked->scraper_slot_acquired && $definitiveRejection) {
                     $capacity = DB::table('scraper_capacity')->where('id', 1)->lockForUpdate()->first();
                     if ($capacity && $capacity->used > 0) DB::table('scraper_capacity')->where('id', 1)->update(['used' => $capacity->used - 1, 'updated_at' => now()]);
                 }
                 $locked->update([
                     'status' => $definitiveRejection ? 'failed' : 'unknown',
                     'error_message' => $definitiveRejection ? $e->getMessage() : 'N�o foi poss�vel confirmar a cria��o na Apify. Reconcilia��o necess�ria.',
-                    'scraper_slot_acquired' => false,
+                    'scraper_slot_acquired' => $definitiveRejection ? false : (bool) $locked->scraper_slot_acquired,
                     'submission_intent_at' => null,
                     'submission_attempt_token' => null,
                     'finished_at' => $definitiveRejection ? now() : null,
