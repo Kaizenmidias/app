@@ -42,6 +42,7 @@ class PollScrapingJob implements ShouldQueue
             $progress = (int) ($remote['Progress'] ?? $remote['progress'] ?? $job->progress);
             if (ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['progress' => min(100, max(0, $progress)), 'updated_at' => now()->addSecond()]) !== 1) return;
             if (in_array($status, ['ok', 'done', 'completed'], true)) {
+                ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['status' => 'importing', 'updated_at' => now()]);
                 $renew = function () use ($job, $claimToken): bool {
                     $owned = ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->exists();
                     if ($owned) ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['polling_claimed_at' => now()->addSecond()]);
@@ -61,6 +62,7 @@ class PollScrapingJob implements ShouldQueue
                 $attempts = (int) ($parameters['refill_attempts'] ?? 0);
                 $remaining = max(0, $requested - $added);
                 if (str_starts_with((string) $job->scraper_job_id, 'apify:') && $remaining > 0 && $attempts < 3) {
+                    ProspectingJob::query()->whereKey($job->id)->where('polling_claim_token', $claimToken)->update(['status' => 'refilling', 'updated_at' => now()]);
                     $parameters['refill_attempts'] = $attempts + 1;
                     $parameters['refill_max_results'] = min($requested, $remaining);
                     $parameters['import_report'] = ['requested' => $requested, 'collected' => $added + $duplicates, 'added' => $added, 'duplicates' => $duplicates, 'rejected' => (int) ($previous['rejected'] ?? 0) + $outcome->rejected, 'total' => $added, 'completed_at' => null];

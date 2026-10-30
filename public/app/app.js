@@ -8,7 +8,7 @@
   const apiFetch = async (url, options={}) => { const method = (options.method || "GET").toUpperCase(); let token = csrf(); if (method !== "GET") { try { const tokenResponse = await Promise.race([fetch(`${API}/csrf-token`, { credentials: "same-origin", cache: "no-store" }), new Promise((_, reject) => setTimeout(() => reject(new Error("csrf-timeout")), 2500))]); if (tokenResponse.ok) { try { const payload = await tokenResponse.json(); token = payload.token || token; } catch {} } } catch {} } return fetch(url, {credentials: "same-origin", ...options, headers: {...(options.headers||{}), ...(method !== "GET" ? {"X-CSRF-TOKEN": token} : {})}}); };
   const POLL_MS = 4000;
   const JOINER = { pt: "em", en: "in", es: "en" };   // "dentista em Barra Funda"
-  const STATUS = { ok: "Concluída", working: "Pesquisando…", pending: "Na fila", failed: "Falhou" };
+  const STATUS = { ok: "Concluída", partial: "Parcial", importing: "Importando", refilling: "Buscando mais", working: "Pesquisando…", pending: "Na fila", failed: "Falhou", unknown: "Aguardando reconciliação" };
   const AMOUNT_HINT = {
     1: "Aproximado — leva ~2 min",
     4: "Aproximado — leva ~3 min",
@@ -234,7 +234,7 @@
       for (const j of state.jobs) {
         const prev = state.prevStatus[j.id];
         if (["ok", "partial"].includes(j.status) && state.counts[j.id] == null) state.counts[j.id] = j.report?.total ?? j.report?.added ?? null;
-        if (j.id === state.activeJobId && (j.status === "pending" || j.status === "working")) setSearchProgress(j.status === "pending" ? "Busca iniciada. Preparando a coleta…" : "Busca em andamento. Coletando leads…");
+        if (j.id === state.activeJobId && ["pending", "working", "importing", "refilling"].includes(j.status)) setSearchProgress(j.status === "pending" ? "Busca iniciada. Preparando a coleta…" : (j.status === "importing" ? "Importando leads encontrados…" : (j.status === "refilling" ? "Buscando mais leads…" : "Busca em andamento. Coletando leads…")));
         if (prev && prev !== j.status && ["ok", "partial"].includes(j.status)) notifyDone(j);
         if (["ok", "partial"].includes(j.status) && j.id === state.activeJobId) { setSearchProgress(j.status === "partial" ? "Busca concluída parcialmente. Abrindo os resultados…" : "Busca concluída. Abrindo os resultados…", "complete"); openResults(j); state.activeJobId = null; }
         if (prev && prev !== j.status && ["failed", "partial"].includes(j.status)) toast(j.status === "partial" ? `A busca “${j.name}” foi concluída parcialmente.` : `A busca “${j.name}” falhou.`);
@@ -243,7 +243,7 @@
       }
       // Compatibilidade com respostas legadas que retornam o ID numérico em
       // formato diferente do POST: uma falha nunca pode deixar o overlay preso.
-      if (state.activeJobId && !state.jobs.some((j) => j.id === state.activeJobId && (j.status === "pending" || j.status === "working"))) {
+      if (state.activeJobId && !state.jobs.some((j) => j.id === state.activeJobId && ["pending", "working", "importing", "refilling"].includes(j.status))) {
         const failed = state.jobs.find((j) => j.status === "failed");
         if (failed) { setSearchProgress("A busca falhou. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; }
         else if (state.jobs.some((j) => j.id === state.activeJobId && ["unknown", "cancel_requested"].includes(j.status))) { setSearchProgress("A busca não pôde ser concluída. Verifique a mensagem e tente novamente.", "failed"); state.activeJobId = null; }
