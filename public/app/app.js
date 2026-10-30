@@ -56,13 +56,13 @@
     clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), ms);
   }
   function setSearchProgress(message, kind = "working") {
+    const loading = $("#search-loading");
+    if (loading && message) { loading.hidden = kind !== "working"; const text = $("#search-loading-message"); if (text) text.textContent = message; }
     const el = $("#search-progress");
     if (!el) return;
     el.textContent = message || "";
     el.hidden = !message;
     el.className = `search-progress${kind === "complete" ? " is-complete" : kind === "failed" ? " is-failed" : ""}`;
-    const loading = $("#search-loading");
-    if (loading && message) { loading.hidden = kind !== "working"; const text = $("#search-loading-message"); if (text) text.textContent = message; }
   }
   function store(k, v) { try { localStorage.setItem("ms:" + k, JSON.stringify(v)); } catch {} }
   function load(k, d) { try { const v = localStorage.getItem("ms:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } }
