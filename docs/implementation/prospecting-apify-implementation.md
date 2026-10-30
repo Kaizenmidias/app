@@ -21,8 +21,8 @@ Checklist executivo derivado da auditoria de funcionamento da rota `/prospecting
 
 ## Fase 1 — contrato único da API
 
-- [ ] Tornar `/api/prospecting/jobs` o único fluxo do frontend.
-- [ ] Remover dependência funcional de `/api/v1/jobs`.
+- [x] Tornar `/api/prospecting/jobs` o único fluxo do frontend.
+- [x] Remover dependência funcional de `/api/v1/jobs`.
 - [ ] Validar termo, localização, quantidade `20|50|100` e lista do próprio usuário.
 - [ ] Enviar ao actor apenas os campos necessários.
 - [ ] Remover fallback silencioso para Gosom.
