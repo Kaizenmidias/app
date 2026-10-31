@@ -17,7 +17,11 @@ class PipelineController extends Controller
             ->orderBy('position')
             ->get();
 
-        return view('pipeline.index', compact('stages'));
+        return view('pipeline.index', [
+            'stages' => $stages,
+            'lists' => $request->user()->leadLists()->orderBy('name')->get(),
+            'assignees' => collect([$request->user()]),
+        ]);
     }
 
     public function storeStage(Request $request)

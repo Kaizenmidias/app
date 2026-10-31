@@ -3,6 +3,7 @@
 @section('title', 'Pipeline · Parceiros Kaizen')
 
 @push('styles')
+    <link rel="stylesheet" href="{{ asset('leads.css') }}?v={{ filemtime(public_path('leads.css')) }}">
     <link rel="stylesheet" href="{{ asset('pipeline.css') }}?v={{ filemtime(public_path('pipeline.css')) }}">
 @endpush
 
@@ -103,7 +104,11 @@
                             <dialog id="lead-dialog-{{ $lead->id }}" class="pipeline-dialog pipeline-lead-dialog">
                                 <div class="pipeline-lead-detail">
                                     <div class="pipeline-dialog-head"><div><p class="module-eyebrow">Informações do lead</p><h2>{{ $lead->name ?: 'Empresa sem nome' }}</h2></div><button type="button" class="dialog-close" data-dialog-close aria-label="Fechar">×</button></div>
-                                    <form method="post" action="{{ route('leads.update', $lead) }}" class="pipeline-stage-checklist">@csrf @method('PUT')<input type="hidden" name="name" value="{{ $lead->name }}"><input type="hidden" name="email" value="{{ $lead->email }}"><div><strong>Etapa do funil</strong><small>Atualize o avanço comercial deste lead.</small></div><div class="pipeline-stage-options"><label><input type="radio" name="funnel_stage" value="contacted" @checked(data_get($lead->raw_data,'funnel_stage')==='contacted')><span>Contato feito</span></label><label><input type="radio" name="funnel_stage" value="meeting" @checked(data_get($lead->raw_data,'funnel_stage')==='meeting')><span>Reunião agendada</span></label><label><input type="radio" name="funnel_stage" value="closed" @checked(data_get($lead->raw_data,'funnel_stage')==='closed')><span>Contrato fechado</span></label></div><button type="submit" class="pipeline-button pipeline-button-primary">Salvar etapa</button></form>
+                                    <form method="post" action="{{ route('leads.update', $lead) }}" class="lead-form pipeline-lead-edit-form">@csrf @method('PUT')
+                                        <p class="module-eyebrow">Editar informações</p>
+                                        @include('leads.partials.fields', ['lead' => $lead])
+                                        <div class="lead-modal-actions"><button type="button" class="lead-button lead-button-secondary" data-dialog-close>Cancelar</button><button type="submit" class="lead-button lead-button-primary">Salvar alterações</button></div>
+                                    </form>
                                     <div class="pipeline-lead-grid">
                                         <div><span>Orçamento</span><strong>R$ {{ number_format((float) ($lead->budget_value ?? 0), 2, ',', '.') }}</strong></div>
                                         <div><span>Etapa</span><strong>{{ $stage->name }}</strong></div>
