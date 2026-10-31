@@ -88,3 +88,11 @@ Evidência operacional adicional: timer systemd `kaizen-partners-schedule.timer`
 - Smoke HTTP sem autenticação: `/login` 200; rotas privadas e APIs 302 para login; assets 200; HTML público antigo 404.
 - Nenhum erro do worker ou scheduler foi registrado nos 15 minutos posteriores à ativação. As entradas `production.ERROR` encontradas no arquivo de log pertencem a releases anteriores.
 - Permanecem deliberadamente não marcados: teste visual autenticado em navegador e smoke pago de ponta a ponta na Apify. Não foram simulados como aprovados para evitar consumo de créditos ou uso de dados sem uma execução de validação explicitamente controlada.
+
+### Revisão de custo e modal de resultados (2026-10-30)
+
+- Corrigido o modal de resultados: ele agora fica fora da sidebar com `backdrop-filter`, evitando recorte por `overflow:hidden`; o botão `Ir para Leads` permanece visível, centralizado e clicável.
+- O frontend não solicita mais enriquecimento pago (`email=false`).
+- O payload do actor agora força `scrapePlaceDetailPage=false`, `scrapeContacts=false` e `scrapeSocialMediaProfiles=false`; a coleta fica limitada aos campos básicos disponíveis no Google Maps.
+- O enriquecedor próprio ainda deve ser tratado como etapa separada; estes campos não são mais buscados pela Apify.
+- Testes direcionados: ProspectingShellTest aprovado; ScraperProcessingTest aprovado com 17 testes e 56 assertions.

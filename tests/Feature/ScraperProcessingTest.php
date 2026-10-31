@@ -26,10 +26,10 @@ class ScraperProcessingTest extends TestCase
   $this->withHeader('X-CSRF-TOKEN',$token)->postJson('/api/prospecting/jobs',['keywords'=>['dentista'],'search_terms'=>['dentista'],'location'=>'São Paulo, SP','max_results'=>20,'lat'=>null,'lon'=>null,'max_time'=>180,'depth'=>1,'email'=>true])->assertStatus(202)->assertJsonPath('status','pending');
   Queue::assertPushed(\App\Jobs\RunScrapingJob::class);
  }
- public function test_apify_payload_contains_search_and_location_fields(): void {
+ public function test_apify_payload_contains_search_and_location_fields_without_paid_enrichment(): void {
   $u=User::factory()->create(['email_verified_at'=>now(),'apify_api_token'=>'test-token']);
   $job=ProspectingJob::create(['user_id'=>$u->id,'keywords'=>['contabilidade'],'location'=>'São Paulo, SP','search_parameters'=>['location'=>'São Paulo, SP','max_results'=>20,'lang'=>'pt','email'=>true],'status'=>'pending']);
-  Http::fake(function ($request) { $this->assertStringContainsString('/acts/compass~crawler-google-places/runs', $request->url()); $body=$request->data(); $this->assertSame(['contabilidade'],$body['searchStringsArray']); $this->assertSame('São Paulo, SP',$body['locationQuery']); $this->assertSame(20,$body['maxCrawledPlacesPerSearch']); $this->assertSame('pt-BR',$body['language']); $this->assertTrue($body['scrapeContacts']); return Http::response(['data'=>['id'=>'run-1','defaultDatasetId'=>'dataset-1']],201); });
+  Http::fake(function ($request) { $this->assertStringContainsString('/acts/compass~crawler-google-places/runs', $request->url()); $body=$request->data(); $this->assertSame(['contabilidade'],$body['searchStringsArray']); $this->assertSame('São Paulo, SP',$body['locationQuery']); $this->assertSame(20,$body['maxCrawledPlacesPerSearch']); $this->assertSame('pt-BR',$body['language']); $this->assertFalse($body['scrapePlaceDetailPage']); $this->assertFalse($body['scrapeContacts']); $this->assertFalse($body['scrapeSocialMediaProfiles']); return Http::response(['data'=>['id'=>'run-1','defaultDatasetId'=>'dataset-1']],201); });
   $this->assertSame('apify:run-1:dataset-1', app(ScraperClient::class)->create($job));
  }
  public function test_cancel_requested_run_is_cancelled_at_apify(): void {

@@ -428,7 +428,9 @@
     if (!terms.length) { $("#keyword").focus(); return showError("Diga o que você procura. Ex.: dentista."); }
     if (!place) { $("#location").focus(); return showError("Diga onde procurar. Ex.: Barra Funda, São Paulo."); }
 
-    const lang = $("#lang").value, depth = state.depth, email = true;
+    // Google Maps collection is intentionally limited to Maps-visible fields.
+    // Website contact/social enrichment is handled separately by our enricher.
+    const lang = $("#lang").value, depth = state.depth, email = false;
       const keywords = [terms[0]];
     const dup = state.jobs.find((j) => (j.status === "pending" || j.status === "working") && j.keywords.join("|") === keywords.join("|"));
     if (dup && !confirm("Essa mesma busca já está rodando ou na fila. Criar outra igual mesmo assim?")) return;
@@ -443,7 +445,7 @@
         checkLocation(),
         new Promise((resolve) => setTimeout(() => resolve(null), 3500)),
       ]);
-      const autoSecs = Math.min(1200, Math.max(180, terms.length * (90 + depth * 25) * (email ? 2 : 1)));
+      const autoSecs = Math.min(1200, Math.max(180, terms.length * (90 + depth * 25)));
       const maxMin = +$("#maxtime").value;
       const body = {
         name: `${terms[0]} · ${place.split(",")[0].trim()}`,

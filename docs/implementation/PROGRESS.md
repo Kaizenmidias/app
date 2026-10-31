@@ -346,3 +346,10 @@ No credentials, cookies, tokens, password hashes, live payloads or personal clie
 - Production smoke without a user session confirmed `/login` HTTP 200, private routes and prospecting APIs redirecting to login, runtime assets HTTP 200 and stale `/app/painel.html` HTTP 404. No new service errors were observed after activation.
 - Authenticated browser validation and a paid end-to-end Apify run remain unverified and are not represented as approved.
 
+### Apify cost controls and results navigation (2026-10-30)
+
+- Corrigido o recorte do modal de resultados: `#view-results` foi separado da sidebar que usa `backdrop-filter`, e `Ir para Leads` agora possui uma área clicável integral e centralizada.
+- O fluxo de prospecção deixou de pedir enriquecimento pago à Apify. O payload força `scrapePlaceDetailPage=false`, `scrapeContacts=false` e `scrapeSocialMediaProfiles=false`; a Apify fica restrita aos dados básicos do Google Maps.
+- A documentação oficial do actor informa que `scrapePlaceDetailPage` abre a página individual de cada local e que `scrapeContacts` lê os sites para e-mails e redes sociais; ambos são add-ons cobrados e mais lentos. O enriquecimento próprio permanece separado e ainda não foi declarado implementado nesta etapa.
+- Validação local após a correção: `ProspectingShellTest` aprovado e `ScraperProcessingTest` aprovado com 17 testes e 56 assertions.
+

@@ -37,8 +37,12 @@ class ScraperClient
             'locationQuery' => $params['location'] ?? null,
             'maxCrawledPlacesPerSearch' => $max,
             'language' => ($params['lang'] ?? 'pt') === 'pt' ? 'pt-BR' : ($params['lang'] ?? 'en'),
-            'scrapePlaceDetailPage' => true,
-            'scrapeContacts' => (bool) ($params['email'] ?? false),
+            // Keep Apify limited to the Google Maps result itself. Website
+            // contact/social enrichment is performed by the application
+            // enricher and must not be charged as an Apify add-on.
+            'scrapePlaceDetailPage' => false,
+            'scrapeContacts' => false,
+            'scrapeSocialMediaProfiles' => false,
             'maxImages' => 0,
             'maxReviews' => 0,
             'includeWebResults' => false,
