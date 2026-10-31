@@ -96,3 +96,7 @@ Evidência operacional adicional: timer systemd `kaizen-partners-schedule.timer`
 - O payload do actor agora força `scrapePlaceDetailPage=false`, `scrapeContacts=false` e `scrapeSocialMediaProfiles=false`; a coleta fica limitada aos campos básicos disponíveis no Google Maps.
 - O enriquecedor próprio ainda deve ser tratado como etapa separada; estes campos não são mais buscados pela Apify.
 - Testes direcionados: ProspectingShellTest aprovado; ScraperProcessingTest aprovado com 17 testes e 56 assertions.
+### Correção adicional — cache do CSS do scraper
+
+- [x] Versionar `public/app/style.css` no HTML renderizado de `/prospecting`, evitando que navegador/CDN reutilize regras antigas do botão “Ir para Leads”.
+- [x] Manter o enriquecimento de e-mail desligado no payload da Apify para não gerar custo adicional; o actor continua recebendo os dados básicos do Google Maps.
