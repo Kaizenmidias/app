@@ -330,7 +330,19 @@ No credentials, cookies, tokens, password hashes, live payloads or personal clie
 
 ### Lead funnel checklist and colored labels (2026-10-29)
 
-- Added per-lead funnel checklist (Contato feito, Reuni„o agendada, Contrato fechado) in lead modals and persisted it in lead metadata with ownership enforced by the existing update flow.
+- Added per-lead funnel checklist (Contato feito, Reuni√£o agendada, Contrato fechado) in lead modals and persisted it in lead metadata with ownership enforced by the existing update flow.
 - Added user-owned labels with configurable background/text colors, creation dialog, and contextual application action from each lead row.
 - Migration 2026_10_29_000010_create_lead_labels.php applied in production release ed0c30a.
+
+### Durable Apify prospecting workflow (2026-10-30)
+
+- Implemented durable candidate tracking per search with unique `(prospecting_job_id, external_place_id)` classification, idempotent lead import, explicit new/duplicate disposition and optional lead association.
+- Consolidated the frontend on `/api/prospecting/jobs`: validated submissions return HTTP 202, only the active job is polled, terminal states close the overlay, partial results remain visible and the result modal links to Leads.
+- Reconciliation now covers active, ambiguous and cancellation states, closes stale orphan jobs without an external run after the configured interval, releases capacity safely and records reconciled failed attempts.
+- Refill depth is accumulated and bounded by the configured candidate/attempt limits. Duplicate-only exhaustion finishes as a truthful partial result rather than promising an unavailable requested quantity.
+- Local validation completed with 89 passing tests and 337 assertions; 9 MySQL-specific tests were skipped locally because the isolated service was unavailable. The isolated `kaizen-mysql-test` validation then passed 5 tests and 17 assertions, and the temporary container was stopped afterward.
+- A consistent pre-migration backup was created at `/www/backups/kaizen-partners/20261030T215240Z-pre-prospecting-candidates/kaizen_partners-pre-000012.sql.gz`; SHA-256 `ef384aa0148f04b425a8020fa74f17b269043b00473c6a4f11d8e8b20e533e2d` was verified together with gzip integrity and non-empty size.
+- Migration `2026_10_30_000012_create_prospecting_job_candidates` was applied as batch 10. Release `/www/wwwroot/app.kaizenmidias.com/releases/32f2a7f` is active, shared `.env` and storage remain linked, and only `kaizen-partners-queue.service` was restarted; the queue worker and scheduler timer are active.
+- Production smoke without a user session confirmed `/login` HTTP 200, private routes and prospecting APIs redirecting to login, runtime assets HTTP 200 and stale `/app/painel.html` HTTP 404. No new service errors were observed after activation.
+- Authenticated browser validation and a paid end-to-end Apify run remain unverified and are not represented as approved.
 
